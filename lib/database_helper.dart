@@ -12,7 +12,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
 
   static Database? _database;
-  String? _mainTableName; // لتخزين اسم الجدول الديناميكي
+  String? _mainTableName; // متغير ذكي لتخزين اسم الجدول الحقيقي
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -29,7 +29,7 @@ class DatabaseHelper {
     );
   }
 
-  // 1. الدالة السحرية لإغلاق الاتصال تماماً قبل استيراد الملف الجديد
+  // 1. الدالة السحرية لكسر حماية القاعدة القديمة وإغلاقها قبل النقل
   Future<void> closeDb() async {
     if (_database != null) {
       await _database!.close();
@@ -53,24 +53,35 @@ class DatabaseHelper {
     return await getDatabasesPath();
   }
 
-  // 2. دالة ذكية لاكتشاف اسم الجدول الحقيقي داخل ملف الـ 7 جيجا لتجنب الخطأ صفر
+  // 2. الدالة الخارقة للبحث عن الجدول المليوني الحقيقي وتجاهل الجداول الفارغة
   Future<String> getMainTableName() async {
     if (_mainTableName != null) return _mainTableName!;
     final db = await instance.database;
     try {
       final result = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'android_metadata'");
+
+      for (var row in result) {
+        String tName = row['name'] as String;
+        // فحص عدد السجلات في كل جدول لاكتشاف الكنز الحقيقي!
+        var countResult = await db.rawQuery('SELECT COUNT(*) FROM $tName');
+        int count = Sqflite.firstIntValue(countResult) ?? 0;
+        if (count > 1000) {
+          _mainTableName = tName;
+          debugPrint("تم العثور على الجدول الحقيقي: $tName بعدد $count سجل");
+          return tName;
+        }
+      }
       if (result.isNotEmpty) {
         _mainTableName = result.first['name'] as String;
-        debugPrint("تم اكتشاف اسم الجدول الحقيقي: $_mainTableName");
         return _mainTableName!;
       }
     } catch(e) {
       debugPrint("خطأ في قراءة اسم الجدول: $e");
     }
-    return 'nambers_thabeet'; // الافتراضي
+    return 'nambers_thabeet';
   }
 
-  // جلب العداد الكلي الفعلي باستخدام اسم الجدول الديناميكي
+  // جلب العداد الكلي بناءً على الجدول الحقيقي
   Future<int> getTotalRecordsCount() async {
     try {
       final db = await instance.database;
@@ -78,18 +89,16 @@ class DatabaseHelper {
       final result = await db.rawQuery('SELECT COUNT(*) FROM $tableName');
       return Sqflite.firstIntValue(result) ?? 0;
     } catch (e) {
-      debugPrint("خطأ أثناء قراءة عداد السجلات: $e");
       return 0;
     }
   }
 
-  // البحث عن طريق الرقم مع دعم الأسماء المتغيرة للأعمدة
+  // البحث الذكي مهما كانت أسماء الأعمدة في القاعدة المسربة
   Future<List<Map<String, dynamic>>> searchByNumber(String number) async {
     try {
       final db = await instance.database;
       String tableName = await getMainTableName();
 
-      // فحص اسم عمود الرقم واسم المشترك الحقيقي في القاعدة المستوردة
       var columns = await db.rawQuery("PRAGMA table_info($tableName)");
       String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
       String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
@@ -101,19 +110,16 @@ class DatabaseHelper {
         limit: 100,
       );
 
-      // توحيد المخرجات للواجهة لتجنب الأخطاء
       return results.map((row) => {
         'names': row[nameCol]?.toString() ?? 'بدون اسم',
         'phone': row[phoneCol]?.toString() ?? 'بدون رقم',
       }).toList();
 
     } catch (e) {
-      debugPrint("خطأ في البحث بالرقم: $e");
       return [];
     }
   }
 
-  // البحث عن طريق الاسم مع الفلترة
   Future<List<Map<String, dynamic>>> searchByName(String name, String company) async {
     try {
       final db = await instance.database;
@@ -148,7 +154,6 @@ class DatabaseHelper {
       }).toList();
 
     } catch(e) {
-      debugPrint("خطأ في البحث بالاسم: $e");
       return [];
     }
   }
