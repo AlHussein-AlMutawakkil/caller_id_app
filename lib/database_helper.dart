@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path_provider/path_provider.dart';
 
 class DatabaseHelper {
   static const _databaseName = "contactsdb.db";
@@ -27,18 +26,26 @@ class DatabaseHelper {
         version: _databaseVersion,
         onCreate: _onCreate,
         onOpen: (db) async {
-          // تسريع القراءة الخارقة
+          // تسريع القراءة الخارقة للملفات الضخمة
           await db.execute('PRAGMA journal_mode=WAL;');
         }
     );
   }
 
+  // إغلاق القاعدة بأمان
   Future<void> closeDb() async {
     if (_database != null) {
       await _database!.close();
       _database = null;
       _mainTableName = null;
     }
+  }
+
+  // 🔥 الدالة الحاسمة: تدمير القاعدة القديمة من الذاكرة العشوائية تماماً قبل الاستيراد
+  Future<void> deleteDbFile() async {
+    await closeDb();
+    String path = join(await getDatabasesPath(), _databaseName);
+    await databaseFactory.deleteDatabase(path);
   }
 
   Future _onCreate(Database db, int version) async {
@@ -56,16 +63,14 @@ class DatabaseHelper {
     return await getDatabasesPath();
   }
 
-  // اكتشاف الجدول الحقيقي بدون استخدام COUNT البطيئة
+  // اكتشاف اسم الجدول الحقيقي تلقائياً
   Future<String> getMainTableName() async {
     if (_mainTableName != null) return _mainTableName!;
     final db = await instance.database;
     try {
       final result = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'android_metadata'");
       if (result.isNotEmpty) {
-        // اختيار أول جدول حقيقي في قاعدة البيانات المسربة
         _mainTableName = result.first['name'] as String;
-        debugPrint("تم العثور على الجدول: $_mainTableName");
         return _mainTableName!;
       }
     } catch(e) {
@@ -74,12 +79,11 @@ class DatabaseHelper {
     return 'nambers_thabeet';
   }
 
-  // 🔥 السر هنا: عد السجلات في جزء من الثانية باستخدام MAX(rowid)
+  // 🔥 جلب الملايين في جزء من الثانية باستخدام MAX(rowid)
   Future<int> getTotalRecordsCount() async {
     try {
       final db = await instance.database;
       String tableName = await getMainTableName();
-      // أمر MAX(rowid) يجلب آخر رقم تسلسلي فوراً وبدون تحميل المعالج
       final result = await db.rawQuery('SELECT MAX(rowid) FROM $tableName');
       return Sqflite.firstIntValue(result) ?? 0;
     } catch (e) {
@@ -87,6 +91,7 @@ class DatabaseHelper {
     }
   }
 
+  // البحث عن طريق الرقم مع الفحص الذكي للأعمدة
   Future<List<Map<String, dynamic>>> searchByNumber(String number) async {
     try {
       final db = await instance.database;
@@ -113,6 +118,7 @@ class DatabaseHelper {
     }
   }
 
+  // البحث عن طريق الاسم
   Future<List<Map<String, dynamic>>> searchByName(String name, String company) async {
     try {
       final db = await instance.database;
