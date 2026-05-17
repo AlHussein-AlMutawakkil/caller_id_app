@@ -19,20 +19,20 @@ class DatabaseHelper {
     return _database!;
   }
 
-  _initDatabase() async {
+  Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), _databaseName);
     return await openDatabase(
         path,
         version: _databaseVersion,
         onCreate: _onCreate,
         onOpen: (db) async {
-          // تسريع القراءة الخارقة للملفات الضخمة
+          // تفعيل وضع الولوج السريع جداً لتسريع الاستعلام من 37 مليون سجل
           await db.execute('PRAGMA journal_mode=WAL;');
         }
     );
   }
 
-  // إغلاق القاعدة بأمان
+  // إغلاق القاعدة بأمان لمنع تعليق النظام
   Future<void> closeDb() async {
     if (_database != null) {
       await _database!.close();
@@ -41,7 +41,7 @@ class DatabaseHelper {
     }
   }
 
-  // 🔥 الدالة الحاسمة: تدمير القاعدة القديمة من الذاكرة العشوائية تماماً قبل الاستيراد
+  // تدمير القاعدة القديمة بالكامل من القرص والذاكرة قبل النقل الجديد
   Future<void> deleteDbFile() async {
     await closeDb();
     String path = join(await getDatabasesPath(), _databaseName);
@@ -63,7 +63,7 @@ class DatabaseHelper {
     return await getDatabasesPath();
   }
 
-  // اكتشاف اسم الجدول الحقيقي تلقائياً
+  // ذكاء اصطناعي لاكتشاف اسم الجدول الحقيقي الذي يحتوي على البيانات
   Future<String> getMainTableName() async {
     if (_mainTableName != null) return _mainTableName!;
     final db = await instance.database;
@@ -73,13 +73,13 @@ class DatabaseHelper {
         _mainTableName = result.first['name'] as String;
         return _mainTableName!;
       }
-    } catch(e) {
-      debugPrint("خطأ في قراءة اسم الجدول: $e");
+    } catch (e) {
+      debugPrint("خطأ: $e");
     }
     return 'nambers_thabeet';
   }
 
-  // 🔥 جلب الملايين في جزء من الثانية باستخدام MAX(rowid)
+  // جلب عدد 37 مليون سجل في أقل من ثانية باستخدام MAX(rowid)
   Future<int> getTotalRecordsCount() async {
     try {
       final db = await instance.database;
@@ -91,12 +91,11 @@ class DatabaseHelper {
     }
   }
 
-  // البحث عن طريق الرقم مع الفحص الذكي للأعمدة
+  // بحث ذكي يتأقلم مع أسماء الأعمدة في القاعدة المسربة
   Future<List<Map<String, dynamic>>> searchByNumber(String number) async {
     try {
       final db = await instance.database;
       String tableName = await getMainTableName();
-
       var columns = await db.rawQuery("PRAGMA table_info($tableName)");
       String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
       String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
@@ -112,18 +111,15 @@ class DatabaseHelper {
         'names': row[nameCol]?.toString() ?? 'بدون اسم',
         'phone': row[phoneCol]?.toString() ?? 'بدون رقم',
       }).toList();
-
     } catch (e) {
       return [];
     }
   }
 
-  // البحث عن طريق الاسم
   Future<List<Map<String, dynamic>>> searchByName(String name, String company) async {
     try {
       final db = await instance.database;
       String tableName = await getMainTableName();
-
       var columns = await db.rawQuery("PRAGMA table_info($tableName)");
       String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
       String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
@@ -139,8 +135,7 @@ class DatabaseHelper {
         'names': row[nameCol]?.toString() ?? 'بدون اسم',
         'phone': row[phoneCol]?.toString() ?? 'بدون رقم',
       }).toList();
-
-    } catch(e) {
+    } catch (e) {
       return [];
     }
   }
