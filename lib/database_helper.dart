@@ -12,7 +12,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
 
   static Database? _database;
-  String? _mainTableName; // متغير ذكي لتخزين اسم الجدول الحقيقي
+  String? _mainTableName; // لتخزين اسم الجدول الحقيقي بذكاء
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -23,13 +23,18 @@ class DatabaseHelper {
   _initDatabase() async {
     String path = join(await getDatabasesPath(), _databaseName);
     return await openDatabase(
-      path,
-      version: _databaseVersion,
-      onCreate: _onCreate,
+        path,
+        version: _databaseVersion,
+        onCreate: _onCreate,
+        onOpen: (db) async {
+          // 🔥 تفعيل وضع WAL لتسريع البحث الخارق في 37 مليون سجل
+          await db.execute('PRAGMA journal_mode=WAL;');
+          await db.execute('PRAGMA synchronous=NORMAL;');
+        }
     );
   }
 
-  // 1. الدالة السحرية لكسر حماية القاعدة القديمة وإغلاقها قبل النقل
+  // 🔥 دالة إغلاق القاعدة لكسر القفل قبل استيراد الملف الجديد
   Future<void> closeDb() async {
     if (_database != null) {
       await _database!.close();
@@ -53,7 +58,7 @@ class DatabaseHelper {
     return await getDatabasesPath();
   }
 
-  // 2. الدالة الخارقة للبحث عن الجدول المليوني الحقيقي وتجاهل الجداول الفارغة
+  // 🔥 الدالة الخارقة: البحث عن الجدول المليوني الحقيقي وتجاهل الجداول الوهمية
   Future<String> getMainTableName() async {
     if (_mainTableName != null) return _mainTableName!;
     final db = await instance.database;
@@ -62,12 +67,12 @@ class DatabaseHelper {
 
       for (var row in result) {
         String tName = row['name'] as String;
-        // فحص عدد السجلات في كل جدول لاكتشاف الكنز الحقيقي!
+        // فحص عدد السجلات لاكتشاف الكنز الحقيقي!
         var countResult = await db.rawQuery('SELECT COUNT(*) FROM $tName');
         int count = Sqflite.firstIntValue(countResult) ?? 0;
         if (count > 1000) {
           _mainTableName = tName;
-          debugPrint("تم العثور على الجدول الحقيقي: $tName بعدد $count سجل");
+          debugPrint("✅ تم العثور على الجدول الحقيقي: $tName بعدد $count سجل");
           return tName;
         }
       }
@@ -76,12 +81,11 @@ class DatabaseHelper {
         return _mainTableName!;
       }
     } catch(e) {
-      debugPrint("خطأ في قراءة اسم الجدول: $e");
+      debugPrint("❌ خطأ في قراءة اسم الجدول: $e");
     }
-    return 'nambers_thabeet';
+    return 'nambers_thabeet'; // الاسم الافتراضي
   }
 
-  // جلب العداد الكلي بناءً على الجدول الحقيقي
   Future<int> getTotalRecordsCount() async {
     try {
       final db = await instance.database;
@@ -93,12 +97,12 @@ class DatabaseHelper {
     }
   }
 
-  // البحث الذكي مهما كانت أسماء الأعمدة في القاعدة المسربة
   Future<List<Map<String, dynamic>>> searchByNumber(String number) async {
     try {
       final db = await instance.database;
       String tableName = await getMainTableName();
 
+      // فحص ذكي لأسماء الأعمدة (سواء كانت phone أو number)
       var columns = await db.rawQuery("PRAGMA table_info($tableName)");
       String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
       String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
@@ -107,7 +111,7 @@ class DatabaseHelper {
         tableName,
         where: '$phoneCol LIKE ?',
         whereArgs: ['%$number%'],
-        limit: 100,
+        limit: 50, // تقليل الحد لتسريع الاستجابة
       );
 
       return results.map((row) => {
@@ -137,14 +141,14 @@ class DatabaseHelper {
           tableName,
           where: '$nameCol LIKE ?',
           whereArgs: ['%$name%'],
-          limit: 100,
+          limit: 50,
         );
       } else {
         results = await db.query(
           tableName,
           where: '$nameCol LIKE ? AND company = ?',
           whereArgs: ['%$name%', company],
-          limit: 100,
+          limit: 50,
         );
       }
 
