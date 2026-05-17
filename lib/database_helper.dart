@@ -12,7 +12,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
 
   static Database? _database;
-  String? _mainTableName; // لتخزين اسم الجدول الحقيقي بذكاء
+  String? _mainTableName;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -27,14 +27,12 @@ class DatabaseHelper {
         version: _databaseVersion,
         onCreate: _onCreate,
         onOpen: (db) async {
-          // 🔥 تفعيل وضع WAL لتسريع البحث الخارق في 37 مليون سجل
+          // تسريع القراءة الخارقة
           await db.execute('PRAGMA journal_mode=WAL;');
-          await db.execute('PRAGMA synchronous=NORMAL;');
         }
     );
   }
 
-  // 🔥 دالة إغلاق القاعدة لكسر القفل قبل استيراد الملف الجديد
   Future<void> closeDb() async {
     if (_database != null) {
       await _database!.close();
@@ -58,39 +56,31 @@ class DatabaseHelper {
     return await getDatabasesPath();
   }
 
-  // 🔥 الدالة الخارقة: البحث عن الجدول المليوني الحقيقي وتجاهل الجداول الوهمية
+  // اكتشاف الجدول الحقيقي بدون استخدام COUNT البطيئة
   Future<String> getMainTableName() async {
     if (_mainTableName != null) return _mainTableName!;
     final db = await instance.database;
     try {
       final result = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'android_metadata'");
-
-      for (var row in result) {
-        String tName = row['name'] as String;
-        // فحص عدد السجلات لاكتشاف الكنز الحقيقي!
-        var countResult = await db.rawQuery('SELECT COUNT(*) FROM $tName');
-        int count = Sqflite.firstIntValue(countResult) ?? 0;
-        if (count > 1000) {
-          _mainTableName = tName;
-          debugPrint("✅ تم العثور على الجدول الحقيقي: $tName بعدد $count سجل");
-          return tName;
-        }
-      }
       if (result.isNotEmpty) {
+        // اختيار أول جدول حقيقي في قاعدة البيانات المسربة
         _mainTableName = result.first['name'] as String;
+        debugPrint("تم العثور على الجدول: $_mainTableName");
         return _mainTableName!;
       }
     } catch(e) {
-      debugPrint("❌ خطأ في قراءة اسم الجدول: $e");
+      debugPrint("خطأ في قراءة اسم الجدول: $e");
     }
-    return 'nambers_thabeet'; // الاسم الافتراضي
+    return 'nambers_thabeet';
   }
 
+  // 🔥 السر هنا: عد السجلات في جزء من الثانية باستخدام MAX(rowid)
   Future<int> getTotalRecordsCount() async {
     try {
       final db = await instance.database;
       String tableName = await getMainTableName();
-      final result = await db.rawQuery('SELECT COUNT(*) FROM $tableName');
+      // أمر MAX(rowid) يجلب آخر رقم تسلسلي فوراً وبدون تحميل المعالج
+      final result = await db.rawQuery('SELECT MAX(rowid) FROM $tableName');
       return Sqflite.firstIntValue(result) ?? 0;
     } catch (e) {
       return 0;
@@ -102,7 +92,6 @@ class DatabaseHelper {
       final db = await instance.database;
       String tableName = await getMainTableName();
 
-      // فحص ذكي لأسماء الأعمدة (سواء كانت phone أو number)
       var columns = await db.rawQuery("PRAGMA table_info($tableName)");
       String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
       String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
@@ -111,7 +100,7 @@ class DatabaseHelper {
         tableName,
         where: '$phoneCol LIKE ?',
         whereArgs: ['%$number%'],
-        limit: 50, // تقليل الحد لتسريع الاستجابة
+        limit: 50,
       );
 
       return results.map((row) => {
@@ -132,25 +121,13 @@ class DatabaseHelper {
       var columns = await db.rawQuery("PRAGMA table_info($tableName)");
       String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
       String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
-      bool hasCompanyCol = columns.any((c) => c['name'] == 'company');
 
-      List<Map<String, Object?>> results;
-
-      if (company == 'إختر شركة الإتصالات' || !hasCompanyCol) {
-        results = await db.query(
-          tableName,
-          where: '$nameCol LIKE ?',
-          whereArgs: ['%$name%'],
-          limit: 50,
-        );
-      } else {
-        results = await db.query(
-          tableName,
-          where: '$nameCol LIKE ? AND company = ?',
-          whereArgs: ['%$name%', company],
-          limit: 50,
-        );
-      }
+      final results = await db.query(
+        tableName,
+        where: '$nameCol LIKE ?',
+        whereArgs: ['%$name%'],
+        limit: 50,
+      );
 
       return results.map((row) => {
         'names': row[nameCol]?.toString() ?? 'بدون اسم',

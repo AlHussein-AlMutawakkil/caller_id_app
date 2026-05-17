@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart'; // عدنا لاستخدام المتصفح بذكاء
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sqflite/sqflite.dart';
 import 'database_helper.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   List<Map<String, dynamic>> _searchResults = [];
 
   bool _isImporting = false;
+  bool _isLoading = false;
   double _importProgress = 0.0;
   String _progressText = "";
 
@@ -47,9 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Future<void> _updateDatabaseCounter() async {
     int count = await DatabaseHelper.instance.getTotalRecordsCount();
     if (count > 0) {
-      setState(() {
-        _totalRecords = count;
-      });
+      setState(() { _totalRecords = count; });
     }
   }
 
@@ -67,10 +66,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     setState(() { _searchResults = results; });
   }
 
-  // 🔥 الدالة الاحترافية: استيراد ديناميكي مباشر بـ البث الحي (بدون مسارات ثابتة وبدون تعليق)
-  Future<void> _pickAndImportDynamic() async {
+  // 🔥 الدالة الخارقة: مستكشف الملفات الداخلي (لتجاوز تجميد الأندرويد)
+  Future<void> _scanAndSelectDatabase() async {
     try {
-      // 1. طلب الصلاحيات
+      // 1. طلب الصلاحيات الأساسية لقراءة الذاكرة
       if (await Permission.manageExternalStorage.isDenied) {
         await Permission.manageExternalStorage.request();
       }
@@ -78,57 +77,146 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         await Permission.storage.request();
       }
 
-      // 2. فتح المتصفح مع خاصية البث الحي لمنع الكارثة (Out of Memory & Caching)
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
-        withReadStream: true, // 🌟 هذه الخاصية هي السر لمنع تعليق المتصفح مع الملفات العملاقة
+      setState(() { _isLoading = true; });
+
+      List<File> foundFiles = [];
+
+      // 2. البحث الذكي في المجلدات التي يحفظ فيها المستخدمون بياناتهم
+      List<Directory> dirsToSearch = [
+        Directory('/storage/emulated/0/Download'),
+        Directory('/storage/emulated/0/الكاشف'),
+        Directory('/storage/emulated/0/Documents'),
+      ];
+
+      for (var dir in dirsToSearch) {
+        if (dir.existsSync()) {
+          try {
+            var entities = dir.listSync(recursive: true, followLinks: false);
+            for (var entity in entities) {
+              // جلب الملفات الضخمة فقط (أكبر من نصف جيجا) لفلترة البحث
+              if (entity is File && entity.lengthSync() > 500000000) {
+                String name = entity.path.toLowerCase();
+                if (name.endsWith('.db') || name.endsWith('.txt') || name.contains('contactsdb')) {
+                  foundFiles.add(entity);
+                }
+              }
+            }
+          } catch(e) {}
+        }
+      }
+
+      // البحث في المسار الجذري للهاتف
+      try {
+        var entities = Directory('/storage/emulated/0/').listSync(recursive: false);
+        for(var entity in entities) {
+          if (entity is File && entity.lengthSync() > 500000000) {
+            if(!foundFiles.any((f) => f.path == entity.path)) foundFiles.add(entity);
+          }
+        }
+      } catch(e) {}
+
+      setState(() { _isLoading = false; });
+
+      if (foundFiles.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("لم نجد ملفات ضخمة! تأكد من وجود القاعدة في التنزيلات", textDirection: TextDirection.rtl),
+              backgroundColor: Colors.red,
+            )
+        );
+        return;
+      }
+
+      // 3. عرض نافذة الاختيار الديناميكية والمباشرة
+      if (!mounted) return;
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("اختر ملف قاعدة البيانات", textDirection: TextDirection.rtl, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 300,
+                child: ListView.builder(
+                  itemCount: foundFiles.length,
+                  itemBuilder: (context, index) {
+                    final file = foundFiles[index];
+                    final sizeGB = (file.lengthSync() / (1024 * 1024 * 1024)).toStringAsFixed(2);
+                    return Card(
+                      elevation: 3,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        leading: const Icon(Icons.storage, color: Color(0xFF1E232C), size: 30),
+                        title: Text(file.path.split('/').last, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text("الحجم: $sizeGB جيجابايت\nالمسار: ${file.path.replaceAll('/storage/emulated/0/', '')}", textDirection: TextDirection.ltr),
+                        onTap: () {
+                          Navigator.pop(context); // إغلاق النافذة
+                          _startDirectImport(file); // بدء النقل التفاعلي المباشر!
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("إلغاء", style: TextStyle(color: Colors.red, fontSize: 16)),
+                )
+              ],
+            );
+          }
       );
+    } catch (e) {
+      setState(() { _isLoading = false; });
+      debugPrint("خطأ أثناء البحث عن الملفات: $e");
+    }
+  }
 
-      // إذا اختار المستخدم ملفاً
-      if (result != null && result.files.isNotEmpty) {
-        PlatformFile pickedFile = result.files.first;
+  // 🔥 الدالة التفاعلية الخالصة: تبدأ البث الحي فوراً بدون أي تجميد
+  Future<void> _startDirectImport(File sourceFile) async {
+    try {
+      // إغلاق القاعدة القديمة ومسح أقفال الـ Cache الخاصة بالنظام
+      await DatabaseHelper.instance.closeDb();
+      String dbDirectoryPath = await DatabaseHelper.instance.getDatabasesDirectoryPath();
+      String targetPath = '$dbDirectoryPath/contactsdb.db';
+      // 🔥 تدمير قاعدة البيانات القديمة من جذورها رسمياً باستخدام Sqflite
+      await databaseFactory.deleteDatabase(targetPath);
+      final targetFile = File(targetPath);
 
-        // التحقق من امتداد الملف للتأكد من أنه قاعدة بيانات
-        if (!pickedFile.name.endsWith('.db') && !pickedFile.name.endsWith('.txt') && !pickedFile.name.contains('contactsdb')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("يرجى اختيار ملف قاعدة بيانات صحيح", textDirection: TextDirection.rtl), backgroundColor: Colors.orange)
-          );
-          return;
-        }
+      if (targetFile.existsSync()) targetFile.deleteSync();
+      File walFile = File('$targetPath-wal');
+      File shmFile = File('$targetPath-shm');
+      if (walFile.existsSync()) walFile.deleteSync();
+      if (shmFile.existsSync()) shmFile.deleteSync();
 
-        // 3. إغلاق القاعدة القديمة وتنظيف الكاش الخاص بها لكسر قفل النظام
-        await DatabaseHelper.instance.closeDb();
-        String dbDirectoryPath = await DatabaseHelper.instance.getDatabasesDirectoryPath();
-        String targetPath = '$dbDirectoryPath/contactsdb.db';
-        final targetFile = File(targetPath);
+      // تفعيل واجهة التحميل السوداء في نفس الجزء من الثانية!
+      setState(() {
+        _isImporting = true;
+        _importProgress = 0.0;
+        _progressText = "جاري الاتصال والنسخ المباشر...";
+      });
 
-        if (await targetFile.exists()) await targetFile.delete();
-        File walFile = File('$targetPath-wal');
-        File shmFile = File('$targetPath-shm');
-        if (await walFile.exists()) await walFile.delete();
-        if (await shmFile.exists()) await shmFile.delete();
+      // إعطاء المعالج فرصة 150 ملي ثانية ليرسم الشاشة السوداء قبل الضغط
+      await Future.delayed(const Duration(milliseconds: 150));
 
-        // 4. تفعيل الواجهة التفاعلية فوراً
-        setState(() {
-          _isImporting = true;
-          _importProgress = 0.0;
-          _progressText = "جاري الاتصال المباشر بالملف...";
-        });
+      final sourceStream = sourceFile.openRead();
+      final targetSink = targetFile.openWrite(mode: FileMode.write);
+      int bytesCopied = 0;
+      int totalBytes = sourceFile.lengthSync();
 
-        // 5. استقبال البث الحي من الملف المختار (أينما كان موقعه في الهاتف)
-        final sourceStream = pickedFile.readStream;
-        if (sourceStream == null) {
-          throw Exception("فشل في إنشاء قناة البث للملف المختار.");
-        }
+      // خانق التحديث (Throttle) لمنع اختناق الشاشة
+      int lastUiUpdateTime = DateTime.now().millisecondsSinceEpoch;
 
-        final targetSink = targetFile.openWrite(mode: FileMode.write);
-        int bytesCopied = 0;
-        int totalBytes = pickedFile.size; // قراءة الحجم الحقيقي للملف
+      await for (List<int> chunk in sourceStream) {
+        targetSink.add(chunk);
+        bytesCopied += chunk.length;
 
-        // سحب البيانات كباقات (Chunks) وعرضها على واجهة التحميل مباشرة
-        await for (List<int> chunk in sourceStream) {
-          targetSink.add(chunk);
-          bytesCopied += chunk.length;
+        int currentTime = DateTime.now().millisecondsSinceEpoch;
+
+        // تحديث النسبة المئوية كل ربع ثانية لتعمل بسلاسة وانسيابية
+        if (currentTime - lastUiUpdateTime > 250) {
+          lastUiUpdateTime = currentTime;
 
           double progress = totalBytes > 0 ? (bytesCopied / totalBytes) : 0.0;
           double copiedGB = bytesCopied / (1024 * 1024 * 1024);
@@ -136,37 +224,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
           setState(() {
             _importProgress = progress;
-            if (totalBytes > 0) {
-              _progressText = "تم نقل ${copiedGB.toStringAsFixed(2)} جيجا من أصل ${totalGB.toStringAsFixed(2)} جيجا";
-            } else {
-              _progressText = "جاري نقل البيانات: ${copiedGB.toStringAsFixed(2)} جيجا";
-            }
+            _progressText = "تم نقل ${copiedGB.toStringAsFixed(2)} جيجا من أصل ${totalGB.toStringAsFixed(2)} جيجا";
           });
         }
-
-        // حفظ البيانات النهائية وإغلاق القناة
-        await targetSink.flush();
-        await targetSink.close();
-
-        setState(() {
-          _progressText = "جاري قراءة السجلات المليونية وتهيئة العداد... لحظات";
-        });
-
-        // 6. تشغيل العداد الحي الديناميكي
-        await _updateDatabaseCounter();
-
-        setState(() { _isImporting = false; });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("اكتمل التحديث بنجاح! قاعدة البيانات جاهزة.", textDirection: TextDirection.rtl), backgroundColor: Colors.green)
-        );
       }
+
+      await targetSink.flush();
+      await targetSink.close();
+
+      setState(() {
+        _importProgress = 1.0;
+        _progressText = "جاري قراءة السجلات المليونية وتهيئة العداد... لحظات";
+      });
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // تشغيل العداد ليقفز حياً إلى الملايين!
+      await _updateDatabaseCounter();
+
+      setState(() { _isImporting = false; });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("اكتمل التحديث بنجاح! قاعدة البيانات جاهزة.", textDirection: TextDirection.rtl), backgroundColor: Colors.green)
+      );
     } catch (e) {
       setState(() { _isImporting = false; });
-      debugPrint("حدث خطأ أثناء الاستيراد الديناميكي: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("حدث خطأ: $e", textDirection: TextDirection.rtl), backgroundColor: Colors.red)
-      );
+      debugPrint("حدث خطأ أثناء النقل: $e");
     }
   }
 
@@ -211,6 +293,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   },
                 ),
                 const Divider(),
+                if (_isLoading) const LinearProgressIndicator(),
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
@@ -220,10 +303,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ],
                   ),
                 ),
-                Expanded(child: _buildResultsList()),
+                if (!_isImporting && !_isLoading) Expanded(child: _buildResultsList()),
               ],
             ),
 
+            // 🔥 الواجهة التفاعلية الفخمة والمنقذة!
             if (_isImporting)
               Container(
                 color: Colors.black.withOpacity(0.85),
@@ -283,10 +367,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
       ),
       floatingActionButton: _isImporting ? null : FloatingActionButton.extended(
-        onPressed: _pickAndImportDynamic, // ربط الزر بالدالة الديناميكية الخالية من المسارات
+        onPressed: _scanAndSelectDatabase, // تشغيل المستكشف الداخلي الديناميكي
         backgroundColor: const Color(0xFF1E232C),
-        icon: const Icon(Icons.flash_on, color: Colors.white),
-        label: const Text("استيراد مباشر من الهاتف (.db)", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.manage_search, color: Colors.white),
+        label: const Text("البحث واستيراد القاعدة", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     );
   }
