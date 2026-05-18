@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart' as ov;
 import 'database_helper.dart';
 import 'home_screen.dart';
 import 'overlay_window.dart';
@@ -36,7 +36,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _requestRequiredPermissions() async {
-    // تم إضافة كافة الصلاحيات المطلوبة ليعمل 100%
     await [
       Permission.phone,
       Permission.contacts,
@@ -59,19 +58,18 @@ class _MyAppState extends State<MyApp> {
             displayName = dbResults.first['names'] ?? "رقم غير مسجل";
           }
 
-          if (!await FlutterOverlayWindow.isActive()) {
-            await FlutterOverlayWindow.showOverlay(
-              height: 400,
-              width: WindowSize.matchParent,
-
-              alignment: OverlayAlignment.center,
-              flag: OverlayFlag.defaultFlag,
+          if (!await ov.FlutterOverlayWindow.isActive()) {
+            await ov.FlutterOverlayWindow.showOverlay(
+              height: 450,
+              width: ov.WindowSize.matchParent,
+              alignment: ov.OverlayAlignment.center,
+              flag: ov.OverlayFlag.defaultFlag,
               enableDrag: true,
-              positionGravity: PositionGravity.auto,
+              positionGravity: ov.PositionGravity.auto,
             );
           }
 
-          FlutterOverlayWindow.shareData({
+          ov.FlutterOverlayWindow.shareData({
             'name': displayName,
             'phone': incomingNumber
           });
@@ -79,8 +77,8 @@ class _MyAppState extends State<MyApp> {
       }
 
       if (event.status == PhoneStateStatus.CALL_ENDED) {
-        if (await FlutterOverlayWindow.isActive()) {
-          await FlutterOverlayWindow.closeOverlay();
+        if (await ov.FlutterOverlayWindow.isActive()) {
+          await ov.FlutterOverlayWindow.closeOverlay();
         }
       }
     });
@@ -89,9 +87,12 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'كاشف الأرقام',
+      title: 'دليل اليمن',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primaryColor: const Color(0xFF1E232C)),
+      theme: ThemeData(
+        primaryColor: const Color(0xFF1E232C),
+        fontFamily: 'Cairo', // يفضل إضافة خط عربي مثل Cairo في pubspec.yaml
+      ),
       home: const HomeScreen(),
     );
   }
