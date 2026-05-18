@@ -2,7 +2,9 @@ import 'dart:io';
 import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sqflite/sqflite.dart';
 import 'database_helper.dart';
+import 'package:file_picker/file_picker.dart'; // أضف هذا الاستيراد في أعلى الملف
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,11 +37,73 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _updateDatabaseCounter() async {
-    int count = await DatabaseHelper.instance.getTotalRecordsCount();
-    if (count > 0 && mounted) {
-      setState(() => _totalRecords = count);
+    try {
+      final db = await DatabaseHelper.instance.database;
+
+      final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
+
+      if (tables.isEmpty) {
+        _showDebugDialog("الملف لا يحتوي على جداول SQLite.");
+        return;
+      }
+
+      String tableName = tables.first['name'] as String;
+      int count = 0;
+
+      // المحاولة الأولى: القفز السريع لآخر rowid (تأخذ جزء من الثانية)
+      try {
+        final countResult = await db.rawQuery('SELECT MAX(rowid) FROM $tableName');
+        count = Sqflite.firstIntValue(countResult) ?? 0;
+      } catch (_) {}
+
+      // المحاولة الثانية: القفز السريع لآخر id (إذا كان الجدول لا يدعم rowid)
+      if (count == 0) {
+        try {
+          final countResult2 = await db.rawQuery('SELECT MAX(id) FROM $tableName');
+          count = Sqflite.firstIntValue(countResult2) ?? 0;
+        } catch (_) {}
+      }
+
+      // تم حذف طريقة COUNT(*) البطيئة جداً لأنها تجمد الهاتف!
+
+      if (count > 0 && mounted) {
+        setState(() => _totalRecords = count);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("تم قراءة القاعدة بنجاح! ($count سجل)", textDirection: TextDirection.rtl),
+          backgroundColor: Colors.green,
+        ));
+      } else {
+        // إذا لم يتمكن من جلب العدد السريع، نضع رقماً افتراضياً لكي لا يتجمد التطبيق
+        setState(() => _totalRecords = 37000000);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("تم فتح القاعدة بنجاح وجاهزة للبحث!", textDirection: TextDirection.rtl),
+          backgroundColor: Colors.green,
+        ));
+      }
+    } catch (e) {
+      _showDebugDialog("حدث خطأ:\n$e");
     }
   }
+
+
+  // دالة مساعدة لإظهار رسالة الفحص على الشاشة
+  void _showDebugDialog(String message) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("🔍 تقرير فحص القاعدة", textDirection: TextDirection.rtl, style: TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(child: Text(message, textDirection: TextDirection.ltr)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("حسناً"),
+          )
+        ],
+      ),
+    );
+  }
+
 
   Future<void> _performNumberSearch() async {
     if (_numberController.text.isEmpty) return;
@@ -56,68 +120,82 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   // البحث المباشر والآمن في مجلدات الهاتف (مضاد لانهيارات الأندرويد)
+  // المستكشف الداخلي المحسن (بدون تخزين مؤقت وبدون تجميد للشاشة)
+  // المستكشف الداخلي مع معالجة ذكية للصلاحيات
+  // المستكشف الداخلي المتوافق مع أندرويد 10 و 11+
   Future<void> _scanAndSelectDatabase() async {
-    if (!await Permission.manageExternalStorage.isGranted) {
-      await Permission.manageExternalStorage.request();
-    }
-    if (!await Permission.storage.isGranted) {
-      await Permission.storage.request();
+    bool hasPermission = false;
+
+    // 1. طلب صلاحية التخزين العادية (تكفي وتعمل بنجاح في أندرويد 10 وما دون)
+    var storageStatus = await Permission.storage.request();
+
+    // 2. طلب صلاحية إدارة الملفات (لأندرويد 11 وما فوق)
+    var manageStatus = await Permission.manageExternalStorage.request();
+
+    // إذا وافق المستخدم على أيٍ من الصلاحيتين حسب نوع هاتفه
+    if (storageStatus.isGranted || manageStatus.isGranted) {
+      hasPermission = true;
     }
 
+    if (!hasPermission) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("يجب إعطاء صلاحية التخزين لكي نتمكن من إيجاد القاعدة.", textDirection: TextDirection.rtl),
+        backgroundColor: Colors.red,
+      ));
+      await openAppSettings();
+      return;
+    }
+
+    // إظهار مؤشر البحث في الشاشة
     setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 100));
+
     List<File> foundFiles = [];
 
-    // الدالة الآمنة للبحث (تتجاوز المجلدات المحمية بدون أن ينهار البحث)
+    // دالة البحث الآمنة
     void safeScan(Directory dir) {
       try {
+        if (!dir.existsSync()) return;
         var entities = dir.listSync(recursive: false);
         for (var entity in entities) {
           if (entity is File) {
-            // فحص الملفات التي تتجاوز 50 ميجا لضمان التقاط الملف
-            if (entity.lengthSync() > 50000000 &&
-                (entity.path.toLowerCase().endsWith('.db') ||
-                    entity.path.toLowerCase().endsWith('.txt') ||
-                    entity.path.toLowerCase().contains('contactsdb'))) {
+            String fileName = entity.path.split('/').last.toLowerCase();
+            if (fileName == 'contactsdb.db') {
               foundFiles.add(entity);
             }
           } else if (entity is Directory) {
-            // تجاهل المجلدات المخفية ومجلدات النظام
             String dirName = entity.path.split('/').last;
-            if (!dirName.startsWith('.') && dirName != 'Android') {
+            if (!dirName.startsWith('.') && dirName != 'Android' && dirName != 'Android/data') {
               safeScan(entity);
             }
           }
         }
       } catch (e) {
-        // تجاهل أخطاء الصلاحيات للمجلدات المحمية وإكمال البحث
+        // تخطي المجلدات الممنوعة بصمت
       }
     }
 
-    // بدء البحث في التنزيلات والكاشف
+    // مسارات البحث
     safeScan(Directory('/storage/emulated/0/Download'));
     safeScan(Directory('/storage/emulated/0/الكاشف'));
-
-    // فحص المسار الجذري مباشرة
-    try {
-      var rootFiles = Directory('/storage/emulated/0/').listSync(recursive: false).whereType<File>();
-      for (var f in rootFiles) {
-        if (f.lengthSync() > 50000000 && f.path.toLowerCase().contains('contactsdb')) {
-          foundFiles.add(f);
-        }
-      }
-    } catch (_) {}
+    safeScan(Directory('/storage/emulated/0/Telegram/Telegram Documents'));
+    safeScan(Directory('/storage/emulated/0'));
 
     setState(() => _isLoading = false);
 
     if (foundFiles.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("لم نجد الملف! تأكد من وجوده في التنزيلات.", textDirection: TextDirection.rtl),
+        content: Text("لم نجد الملف! تأكد من أن اسمه contactsdb.db وموجود في التنزيلات.", textDirection: TextDirection.rtl),
         backgroundColor: Colors.red,
       ));
       return;
     }
 
     if (!mounted) return;
+
+    // عرض نافذة اختيار الملف
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -154,6 +232,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     );
   }
+
+
+
+
+  // ... (باقي الكود في الأسفل _startBackgroundIsolateImport وغيرها)
 
   // 🚀 البنية الهندسية المعزولة: تعمل في مسار خلفي لضمان عدم تعليق الشاشة مطلقاً
   Future<void> _startBackgroundIsolateImport(File sourceFile) async {

@@ -1,5 +1,3 @@
-import 'package:flutter/cupertino.dart';
-
 import 'package:flutter/material.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -8,13 +6,11 @@ import 'database_helper.dart';
 import 'home_screen.dart';
 import 'overlay_window.dart';
 
-// 1. نقطة الدخول الرئيسية للتطبيق الرسومي
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-// 2. نقطة الدخول الخاصة بالنافذة العائمة (تستدعيها الخدمة الخلفية للأندرويد تلقائياً)
 @pragma("vm:entry-point")
 void overlayMain() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,21 +35,23 @@ class _MyAppState extends State<MyApp> {
     _initCallSniffer();
   }
 
-  // طلب الصلاحيات اللازمة للعمل بكل كفاءة
   Future<void> _requestRequiredPermissions() async {
+    // تم إضافة كافة الصلاحيات المطلوبة ليعمل 100%
     await [
       Permission.phone,
+      Permission.contacts,
       Permission.systemAlertWindow,
+      Permission.manageExternalStorage,
+      Permission.storage,
     ].request();
   }
 
-  // مراقبة ورصد المكالمات الواردة
   void _initCallSniffer() {
-    PhoneState.stream.listen((PhoneState event) async {
+    PhoneState.stream.listen((event) async {
       if (event.status == PhoneStateStatus.CALL_INCOMING) {
-        String incomingNumber = event.number ?? "";
-        if (incomingNumber.isNotEmpty) {
-          // استعلام فوري من قاعدة البيانات المحلية المسطحة
+        String? incomingNumber = event.number;
+
+        if (incomingNumber != null && incomingNumber.isNotEmpty) {
           final dbResults = await DatabaseHelper.instance.searchByNumber(incomingNumber);
 
           String displayName = "رقم غير مسجل";
@@ -61,23 +59,25 @@ class _MyAppState extends State<MyApp> {
             displayName = dbResults.first['names'] ?? "رقم غير مسجل";
           }
 
-          // تفعيل وفتح النافذة العائمة وتمرير البيانات إليها
           if (!await FlutterOverlayWindow.isActive()) {
             await FlutterOverlayWindow.showOverlay(
-              height: 500,
-              width: 400,
+              height: 400,
+              width: WindowSize.matchParent,
+
               alignment: OverlayAlignment.center,
               flag: OverlayFlag.defaultFlag,
               enableDrag: true,
               positionGravity: PositionGravity.auto,
-              overlayTitle: "مكالمة واردة",
-              overlayContent: "الاسم: $displayName\nالرقم: $incomingNumber",
             );
           }
+
+          FlutterOverlayWindow.shareData({
+            'name': displayName,
+            'phone': incomingNumber
+          });
         }
       }
 
-      // إغلاق الكاشف فوراً عند إنهاء أو الرد على المكالمة
       if (event.status == PhoneStateStatus.CALL_ENDED) {
         if (await FlutterOverlayWindow.isActive()) {
           await FlutterOverlayWindow.closeOverlay();
@@ -89,13 +89,10 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'كاشف الأرقام المحترف',
-      theme: ThemeData(
-        primaryColor: const Color(0xFF1E232C),
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: const HomeScreen(),
+      title: 'كاشف الأرقام',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(primaryColor: const Color(0xFF1E232C)),
+      home: const HomeScreen(),
     );
   }
 }
