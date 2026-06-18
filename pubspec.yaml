@@ -46,6 +46,8 @@ dependencies:
   archive: ^3.6.1
   file_picker: ^8.0.5
   flutter_overlay_window: ^0.5.0
+  flutter_background_service: ^3.0.0
+  flutter_local_notifications: ^17.0.0
 
 
 dev_dependencies:

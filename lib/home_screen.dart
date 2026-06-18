@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_overlay_window/flutter_overlay_window.dart' as ov;
-import 'database_helper.dart';
+import 'database/database_helper.dart';
+import 'core/theme/app_colors.dart';
+import 'views/number_search_view.dart';
+import 'views/name_search_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,20 +12,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _results = [];
-  bool _isLoading = false;
   int _totalRecords = 0;
-  int _currentIndex = 0; // 0: سجل الأرقام, 1: البحث بالاسم
-  String _selectedCompany = "الكل";
-  final List<String> _companies = ["الكل", "يمن موبايل", "سبأفون", "يو", "واي", "ثابت"];
-  final Map<String, String> _companyPrefixes = {
-    "يمن موبايل": "77",
-    "سبأفون": "71",
-    "يو": "73",
-    "واي": "70",
-    "ثابت": "0",
-  };
+  int _currentIndex = 1; // التبويب الافتراضي (البحث بالرقم)
+  bool _isImporting = false;
 
   @override
   void initState() {
@@ -33,254 +22,128 @@ class _HomeScreenState extends State<HomeScreen> {
     _updateDatabaseCounter();
   }
 
+  // تحديث عداد السجلات من قاعدة البيانات
   Future<void> _updateDatabaseCounter() async {
     int count = await DatabaseHelper.instance.getTotalRecordsCount();
     if (mounted) {
-      setState(() => _totalRecords = count);
+      setState(() {
+        _totalRecords = count;
+      });
     }
   }
 
-  void _search() async {
-    String query = _searchController.text.trim();
-    if (query.isEmpty) return;
+  // دالة بدء استيراد ونسخ قاعدة البيانات من مجلد Download
+  Future<void> _handleDatabaseImport() async {
+    setState(() => _isImporting = true);
 
-    setState(() => _isLoading = true);
-    List<Map<String, dynamic>> results = [];
+    // إظهار رسالة للمستخدم بأن العملية بدأت
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("جاري فحص واستيراد قاعدة البيانات من مجلد Download...", textAlign: TextAlign.right),
+        duration: Duration(seconds: 3),
+      ),
+    );
 
-    if (_currentIndex == 0) {
-      results = await DatabaseHelper.instance.searchByNumber(query);
-    } else {
-      String? prefix = _selectedCompany == "الكل" ? null : _companyPrefixes[_selectedCompany];
-      results = await DatabaseHelper.instance.searchByName(query, companyPrefix: prefix);
+    try {
+      // استدعاء قاعدة البيانات يطلق دالة الفحص والنسخ تلقائياً بداخل DatabaseHelper
+      final db = await DatabaseHelper.instance.database;
+      await _updateDatabaseCounter(); // تحديث العداد بعد الاستيراد الناجح
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("مبروك! تم استيراد قاعدة البيانات بنجاح وتحديث النظام.", textAlign: TextAlign.right),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("خطأ أثناء الاستيراد: $e", textAlign: TextAlign.right),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isImporting = false);
     }
-
-    setState(() {
-      _results = results;
-      _isLoading = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: _buildDrawer(),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E232C),
+        backgroundColor: AppColors.primary,
         elevation: 0,
         centerTitle: true,
         title: const Text(
-          "دليل اليمن",
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            "دليل اليمن",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
         ),
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(context).openDrawer(),
+        // زر الاستيراد يظهر هنا مباشرة في الأعلى لضمان عدم اختفائه
+        actions: [
+          _isImporting
+              ? const Padding(
+            padding: EdgeInsets.all(12.0),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            ),
+          )
+              : IconButton(
+            icon: const Icon(Icons.storage_rounded, color: Colors.white, size: 28),
+            tooltip: "استيراد قاعدة البيانات",
+            onPressed: _handleDatabaseImport,
           ),
-        ),
+        ],
       ),
       body: Column(
         children: [
-          // قسم العداد المطابق للفيديو
+          // شريط عرض عدد السجلات الحالية
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 0.5)),
-            ),
-            child: Column(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            color: Colors.grey[50],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("يوجد حالياً", style: TextStyle(fontSize: 14, color: Colors.black54)),
-                const SizedBox(height: 5),
+                const Text("رقم  ", style: TextStyle(fontSize: 14, color: Colors.black54)),
                 Text(
                   _totalRecords.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'),
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF1E232C)),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
                 ),
-                const SizedBox(height: 5),
-                const Text("رقم", style: TextStyle(fontSize: 14, color: Colors.black54)),
+                const Text("  مسجل حالياً", style: TextStyle(fontSize: 14, color: Colors.black54)),
               ],
             ),
           ),
 
+          // واجهات البحث (بالاسم وبالرقم)
           Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                child: Column(
-                  children: [
-                    if (_currentIndex == 1) ...[
-                      DropdownButtonFormField<String>(
-                        value: _selectedCompany,
-                        decoration: const InputDecoration(
-                          labelText: "إختر شركة الإتصالات",
-                          labelStyle: TextStyle(color: Colors.grey),
-                          border: UnderlineInputBorder(),
-                        ),
-                        items: _companies.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value, textDirection: TextDirection.rtl),
-                          );
-                        }).toList(),
-                        onChanged: (newValue) {
-                          setState(() => _selectedCompany = newValue!);
-                        },
-                      ),
-                      const SizedBox(height: 15),
-                    ],
-                    TextField(
-                      controller: _searchController,
-                      textAlign: TextAlign.center,
-                      keyboardType: _currentIndex == 0 ? TextInputType.phone : TextInputType.text,
-                      decoration: InputDecoration(
-                        hintText: _currentIndex == 0 ? "أدخل الرقم هنا" : "أدخل الاسم هنا",
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                        focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF1E232C))),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: _search,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E232C),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                        ),
-                        child: const Text("بحث", style: TextStyle(color: Colors.white, fontSize: 20)),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    if (_isLoading)
-                      const CircularProgressIndicator(color: Color(0xFF1E232C))
-                    else
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _results.length,
-                        separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey[300]),
-                        itemBuilder: (context, index) {
-                          final item = _results[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              item['names'],
-                              style: const TextStyle(color: Color(0xFF1E232C), fontWeight: FontWeight.bold, fontSize: 18),
-                              textDirection: TextDirection.rtl,
-                            ),
-                            subtitle: Text(
-                              item['phone'],
-                              style: const TextStyle(color: Colors.blue, fontSize: 16),
-                              textDirection: TextDirection.rtl,
-                            ),
-                            onTap: () {
-                              if (_currentIndex == 1) {
-                                _showDetailsDialog(item['phone']);
-                              }
-                            },
-                          );
-                        },
-                      ),
-                  ],
-                ),
-              ),
+            child: IndexedStack(
+              index: _currentIndex,
+              children: const [
+                NameSearchView(),   // index 0
+                NumberSearchView(), // index 1
+              ],
             ),
           ),
         ],
       ),
+
+      // أزرار التنقل السفلية بين البحث بالرقم والاسم
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        backgroundColor: const Color(0xFF1E232C),
+        backgroundColor: AppColors.primary,
         selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey[400],
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-            _results = [];
-            _searchController.clear();
-          });
-        },
+        unselectedItemColor: Colors.white70,
+        onTap: (index) => setState(() => _currentIndex = index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.phone_android), label: "سجل الأرقام"),
-          BottomNavigationBarItem(icon: Icon(Icons.person_search), label: "البحث بالاسم"),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Color(0xFF1E232C)),
-            child: Center(
-              child: Text(
-                "دليل اليمن",
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.refresh),
-            title: const Text("إعادة تحميل قاعدة البيانات"),
-            onTap: () => Navigator.pop(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.update),
-            title: const Text("تحديث قاعدة البيانات"),
-            onTap: () => Navigator.pop(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.visibility),
-            title: const Text("عرض اسم المتصل"),
-            trailing: Switch(value: true, onChanged: (v) {}),
-            onTap: () {},
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text("حول"),
-            onTap: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDetailsDialog(String phone) async {
-    setState(() => _isLoading = true);
-    final relatedNames = await DatabaseHelper.instance.searchByNumber(phone);
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("الأسماء المتعلقة بـ $phone", textDirection: TextDirection.rtl, style: const TextStyle(color: Color(0xFF1E232C))),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: relatedNames.length,
-            itemBuilder: (context, index) => ListTile(
-              title: Text(relatedNames[index]['names'], textDirection: TextDirection.rtl),
-              leading: const Icon(Icons.person, color: Colors.grey),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("إغلاق", style: TextStyle(color: Colors.red)),
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person_search), label: "بحث بالإسم"),
+          BottomNavigationBarItem(icon: Icon(Icons.phone), label: "بحث بالرقم"),
         ],
       ),
     );
