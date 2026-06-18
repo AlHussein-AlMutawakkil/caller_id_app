@@ -83,7 +83,7 @@ class _NumberSearchViewState extends State<NumberSearchView> {
                   children: [
                     Icon(Icons.search, color: Colors.white),
                     SizedBox(width: 8),
-                    Text("بدء البحث الفوري بالرقم", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text("بحث بالرقم", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),

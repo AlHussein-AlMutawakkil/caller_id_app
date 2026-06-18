@@ -220,9 +220,45 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 60, // الارتفاع الافتراضي للعنوان
         backgroundColor: AppColors.primary,
         title: const Text("كاشف الأرقام اليمني", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
+        // استخدام bottom لإضافة العداد بشكل منفصل ومنظم
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.blueGrey.withOpacity(0.08), // خلفية بيضاء شفافة لتبرز فوق لون الـ AppBar
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TweenAnimationBuilder<double>(
+
+                  tween: Tween<double>(begin: 0, end: _totalRecords.toDouble()),
+                  duration: const Duration(milliseconds: 1500),
+                  builder: (context, value, child) {
+                    String formattedValue = value.round().toString().replaceAllMapped(
+                        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'
+                    );
+                    return Text(
+                      "يوجد حالياً $formattedValue سجل في الدليل",
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                    );
+                  },
+                ),
+                const SizedBox(width: 10),
+                const Icon(Icons.storage_rounded, color: Colors.white, size: 22),
+              ],
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: _isLoadingScan
@@ -238,38 +274,6 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Column(
               children: [
-                // تصميم عداد السجلات المضبوط الاتجاه والصياغة
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.blueGrey.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.blueGrey.withOpacity(0.15)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.storage_rounded, color: AppColors.primary, size: 22),
-                      const SizedBox(width: 10),
-                      TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 0, end: _totalRecords.toDouble()),
-                        duration: const Duration(milliseconds: 1500),
-                        builder: (context, value, child) {
-                          int roundedValue = value.round();
-                          String formattedValue = roundedValue.toString().replaceAllMapped(
-                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'
-                          );
-                          return Text(
-                            "يوجد حالياً $formattedValue سجل في الدليل",
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.primary),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
 
                 Expanded(
                   child: IndexedStack(

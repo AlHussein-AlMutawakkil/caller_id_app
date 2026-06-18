@@ -112,11 +112,11 @@ class _NameSearchViewState extends State<NameSearchView> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Column(
               children: [
-                const Text(
-                  "البحث بالإسم",
-                  style: TextStyle(fontSize: 24, color: AppColors.primary, fontWeight: FontWeight.w400),
-                ),
-                const SizedBox(height: 10),
+                // const Text(
+                //   "البحث بالإسم",
+                //   style: TextStyle(fontSize: 24, color: AppColors.primary, fontWeight: FontWeight.w400),
+                // ),
+                // const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   value: _selectedCompany,
                   decoration: const InputDecoration(labelText: "إختر شركة الإتصالات", border: UnderlineInputBorder()),
@@ -129,10 +129,15 @@ class _NameSearchViewState extends State<NameSearchView> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 18),
                   keyboardType: TextInputType.text,
-                  decoration: const InputDecoration(
+                  decoration:  InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    prefixIcon: const Icon(Icons.person_search, color: AppColors.primary),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+
                     hintText: "أدخل الاسم هنا",
-                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primary)),
-                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+                    // focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primary)),
+                    // enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -140,12 +145,20 @@ class _NameSearchViewState extends State<NameSearchView> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _search,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text("بحث", style: TextStyle(color: Colors.white, fontSize: 18)),
+                    onPressed: _search,
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text("بحث بالإسم", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
                   ),
                 ),
               ],
