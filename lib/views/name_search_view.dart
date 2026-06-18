@@ -229,3 +229,4 @@ class _NameSearchViewState extends State<NameSearchView> {
     );
   }
 }
+

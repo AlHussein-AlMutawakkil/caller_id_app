@@ -105,6 +105,7 @@ void onStart(ServiceInstance service) async {
 void overlayMain() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MaterialApp(
+
     debugShowCheckedModeBanner: false,
     home: CallerOverlayWindow(),
   ));
@@ -143,6 +144,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: AppColors.primary,
+
         fontFamily: 'Cairo',
       ),
       home: const HomeScreen(),

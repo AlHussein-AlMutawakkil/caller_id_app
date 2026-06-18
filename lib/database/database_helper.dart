@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
+  // اسم ملف قاعدة البيانات الداخلي الثابت
   static const _databaseName = "contactsdb.db";
   static const _databaseVersion = 1;
 
@@ -11,7 +12,6 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
 
   static Database? _database;
-  String? _mainTableName;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -23,49 +23,42 @@ class DatabaseHelper {
     String databasesPath = await getDatabasesPath();
     String path = join(databasesPath, _databaseName);
 
-    // 1. التحقق مما إذا كانت قاعدة البيانات موجودة بالفعل في المجلد الخاص بالتطبيق
-    bool exists = await databaseExists(path);
-
-    if (!exists) {
-      // 2. إذا كان تثبيت جديد وقاعدة البيانات غير موجودة، نقوم باستيرادها
-      debugPrint("تثبيت جديد: قاعدة البيانات الداخلية غير موجودة. جاري البحث عنها في الذاكرة الخارجية...");
-
-      // المسار المتوقع للملف الخارجي (مثلاً وضع الملف في مجلد الداونلود للهاتف)
-      String externalPath = "/storage/emulated/0/Download/contactsdb.db";
-      File externalFile = File(externalPath);
-
-      if (await externalFile.exists()) {
-        try {
-          // إنشاء المجلد الداخلي للتطبيق في حال لم يكن موجوداً بعد
-          await Directory(databasesPath).create(recursive: true);
-
-          debugPrint("تم العثور على الملف الخارجي، جاري النسخ والاستيراد... قد يستغرق هذا دقيقة بناءً على الحجم.");
-
-          // نسخ ملف قاعدة البيانات بالكامل إلى المسار الداخلي للتطبيق
-          await externalFile.copy(path);
-
-          debugPrint("مبروك! تم استيراد قاعدة البيانات بنجاح إلى النظام الداخلي.");
-        } catch (e) {
-          debugPrint("خطأ حرج أثناء نسخ قاعدة البيانات: $e");
-        }
-      } else {
-        debugPrint("تنبيه حرج: لم يتم العثور على ملف contactsdb.db في مجلد Download الخارجي!");
-        // هنا يمكنك ترك التطبيق ينشئ قاعدة بيانات فارغة كاحتياط عبر الـ onCreate التقليدي
-      }
-    } else {
-      debugPrint("قاعدة البيانات موجودة مسبقاً وجاهزة للاستخدام مباشرة.");
-    }
-
-    // 3. فتح قاعدة البيانات المستوردة والمستقرة الآن
     return await openDatabase(
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
+      onOpen: (db) async {
+        // 🚀 حقن منشطات السرعة القصوى لربط الـ 7.8 جيجابايت بالذاكرة العشوائية RAM فوراً
+        try {
+          await db.rawQuery('PRAGMA journal_mode=WAL;');
+          await db.rawQuery('PRAGMA synchronous=OFF;');
+          await db.rawQuery('PRAGMA temp_store=MEMORY;');
+          await db.rawQuery('PRAGMA cache_size=-200000;'); // كاش 200 ميجابايت فوري
+          await db.rawQuery('PRAGMA mmap_size=30000000000;'); // خرائط الذاكرة لقفز المعالج
+        } catch (e) {
+          debugPrint("تنبيه أثناء تهيئة المحرك: $e");
+        }
+      },
     );
   }
 
+  Future<void> closeDb() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+  }
+
+  Future<void> deleteDbFile() async {
+    await closeDb();
+    String databasesPath = await getDatabasesPath();
+    String path = join(databasesPath, _databaseName);
+    await databaseFactory.deleteDatabase(path);
+  }
+
   Future _onCreate(Database db, int version) async {
-    await db.execute('''
+    try {
+      await db.execute('''
           CREATE TABLE IF NOT EXISTS nambers_thabeet (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             phone TEXT,
@@ -73,84 +66,108 @@ class DatabaseHelper {
             company TEXT
           )
           ''');
+    } catch(e) {}
   }
 
-  Future<String> getMainTableName() async {
-    if (_mainTableName != null) return _mainTableName!;
-    final db = await instance.database;
-    try {
-      final result = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
-      if (result.isNotEmpty) {
-        for (var row in result) {
-          String tName = row['name'].toString().toLowerCase();
-          if (tName.contains('contact') || tName.contains('number') || tName.contains('thabeet')) {
-            _mainTableName = row['name'] as String;
-            return _mainTableName!;
-          }
-        }
-        _mainTableName = result.first['name'] as String;
-        return _mainTableName!;
-      }
-    } catch (_) {}
-    return 'nambers_thabeet';
+  Future<String> getDatabasesDirectoryPath() async {
+    return await getDatabasesPath();
   }
 
-  // دالة البحث بالرقم - تجلب السطر كما هو ليتم تفكيكه في الواجهة
-  Future<List<Map<String, dynamic>>> searchByNumber(String number) async {
-    try {
-      final db = await instance.database;
-      String tableName = await getMainTableName();
-
-      final results = await db.rawQuery('''
-        SELECT phone, names 
-        FROM $tableName 
-        WHERE phone = ?
-        LIMIT 1
-      ''', [number]);
-
-      return results;
-    } catch (e) {
-      debugPrint("Search Error: $e");
-      return [];
-    }
-  }
-
-  // دالة البحث بالاسم - تجلب السجلات المتطابقة مباشرة
-  Future<List<Map<String, dynamic>>> searchByName(String name, {String? companyPrefix}) async {
-    try {
-      final db = await instance.database;
-      String tableName = await getMainTableName();
-
-      String whereClause = "names LIKE ?";
-      List<dynamic> whereArgs = ["%$name%"];
-
-      if (companyPrefix != null && companyPrefix.isNotEmpty) {
-        whereClause += " AND phone LIKE ?";
-        whereArgs.add("$companyPrefix%");
-      }
-
-      final results = await db.rawQuery('''
-        SELECT phone, names 
-        FROM $tableName 
-        WHERE $whereClause 
-        LIMIT 50
-      ''', whereArgs);
-
-      return results;
-    } catch (e) {
-      debugPrint("Search Name Error: $e");
-      return [];
-    }
-  }
-
+  // ⚡ قراءة عداد الـ 37 مليون سجل في لمح البصر دون تجميد
   Future<int> getTotalRecordsCount() async {
     try {
-      final db = await instance.database;
-      String tableName = await getMainTableName();
-      final result = await db.rawQuery('SELECT MAX(rowid) FROM $tableName');
-      return Sqflite.firstIntValue(result) ?? 0;
-    } catch (_) {
+      final db = await database;
+      // الاتجاه المباشر للجدول الأساسي المليوني نكاية في جداول النظام الفارغة
+      final result = await db.rawQuery('SELECT MAX(rowid) FROM nambers_thabeet');
+      int? count = Sqflite.firstIntValue(result);
+
+      // إذا كان جدول الملف المستورد يحمل اسماً آخر احتياطياً
+      if (count == null || count == 0) {
+        final altResult = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
+        if (altResult.isNotEmpty) {
+          String altTable = altResult.first['name'] as String;
+          final res = await db.rawQuery('SELECT MAX(rowid) FROM $altTable');
+          return Sqflite.firstIntValue(res) ?? 0;
+        }
+      }
+      return count ?? 0;
+    } catch (e) {
       return 0;
+    }
+  }
+
+  // ⚡ استعلام الرقم الصاروخي الفوري المباشر
+  Future<List<Map<String, dynamic>>> searchByNumber(String number) async {
+    try {
+      final db = await database;
+
+      // الكشف الديناميكي عن اسم العمود الداخلي (هل هو phone أم number) لمنع الانهيار
+      var columns = await db.rawQuery("PRAGMA table_info(nambers_thabeet)");
+      if (columns.isEmpty) {
+        // محاولة جلب الجدول البديل إذا اختلف الاسم
+        final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
+        if (tables.isNotEmpty) {
+          columns = await db.rawQuery("PRAGMA table_info(${tables.first['name']})");
+        }
+      }
+
+      String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
+      String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
+      String tableName = columns.isNotEmpty ? (columns.first['table']?.toString() ?? 'nambers_thabeet') : 'nambers_thabeet';
+      if(_database != null && tableName == 'nambers_thabeet') {
+        final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
+        if(tables.isNotEmpty) tableName = tables.first['name'] as String;
+      }
+
+      final results = await db.query(
+        tableName,
+        where: '$phoneCol LIKE ?',
+        whereArgs: ['$number%'], // الفهرسة المباشرة بالبادئة لمنع البطء والـ Lock
+        limit: 100,
+      );
+
+      return results.map((row) => {
+        'names': row[nameCol]?.toString().trim() ?? 'بدون اسم',
+        'phone': row[phoneCol]?.toString().trim() ?? 'بدون رقم',
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ⚡ استعلام الاسم الصاروخي الفوري المباشر
+  Future<List<Map<String, dynamic>>> searchByName(String name, {String? companyPrefix}) async {
+    try {
+      final db = await database;
+
+      var tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
+      String tableName = tables.isNotEmpty ? tables.first['name'] as String : 'nambers_thabeet';
+
+      var columns = await db.rawQuery("PRAGMA table_info($tableName)");
+      String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
+      String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
+
+      String whereClause = '$nameCol LIKE ?';
+      List<dynamic> whereArgs = ['$name%']; // بادئة الاسم لقفز الذاكرة العشوائية فوراً
+
+      if (companyPrefix != null && companyPrefix.isNotEmpty) {
+        whereClause += ' AND $phoneCol LIKE ?';
+        whereArgs.add('$companyPrefix%');
+      }
+
+      final results = await db.query(
+        tableName,
+        where: whereClause,
+        whereArgs: whereArgs,
+        limit: 100,
+      );
+
+      return results.map((row) => {
+        'names': row[nameCol]?.toString().trim() ?? 'بدون اسم',
+        'phone': row[phoneCol]?.toString().trim() ?? 'بدون رقم',
+      }).toList();
+    } catch (e) {
+      return [];
     }
   }
 }
