@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../database/database_helper.dart';
 import '../core/theme/app_colors.dart';
 import '../core/constants/app_constants.dart';
+import '../core/widgets/app_modal_dialog.dart';
 
 class NameSearchView extends StatefulWidget {
   const NameSearchView({super.key});
@@ -44,52 +45,97 @@ class _NameSearchViewState extends State<NameSearchView> {
   }
 
   void _showNamesDialog(BuildContext context, String phone, String allNames) {
-    List<String> namesList = allNames.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    List<String> namesList = allNames
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
 
-    showDialog(
+    AppModalDialog.show(
       context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          backgroundColor: Colors.white,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-            width: double.infinity,
-            child: Column(
+      title: "الأسماء المرتبطة بالرقم",
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // شارة رقم الهاتف
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.scaffoldBackground,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.cardBorder),
+            ),
+            child: Row(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                const Icon(Icons.phone_android_rounded, size: 16, color: AppColors.primary),
+                const SizedBox(width: 6),
                 Text(
-                  "الأسماء المتعلقة بـ  $phone",
-                  style: const TextStyle(color: AppColors.textDark, fontSize: 20),
-                  textDirection: TextDirection.rtl,
-                ),
-                const SizedBox(height: 15),
-                const Divider(height: 1, color: Colors.grey),
-                const SizedBox(height: 10),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: namesList.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Text(
-                          namesList[index],
-                          style: const TextStyle(color: AppColors.primary, fontSize: 18),
-                          textAlign: TextAlign.right,
-                          textDirection: TextDirection.rtl,
-                        ),
-                      );
-                    },
+                  phone,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: AppColors.divider),
+          // قائمة الأسماء المرتبطة
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: namesList.length,
+            separatorBuilder: (_, __) => const Divider(
+              height: 1,
+              color: AppColors.divider,
+              indent: 10,
+              endIndent: 10,
+            ),
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.scaffoldBackground,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        namesList[index],
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 

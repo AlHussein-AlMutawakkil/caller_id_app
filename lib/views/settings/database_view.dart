@@ -6,6 +6,7 @@ import '../../core/constants/app_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/settings_card.dart';
 import '../../core/widgets/settings_tile.dart';
+import '../../core/widgets/app_modal_dialog.dart';
 import '../../database/database_helper.dart';
 
 class DatabaseView extends StatefulWidget {
@@ -76,33 +77,24 @@ class _DatabaseViewState extends State<DatabaseView> {
   }
 
   Future<void> _deleteDatabase() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppModalDialog.show<bool>(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
-            'حذف قاعدة البيانات',
-            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.error),
+      title: 'حذف قاعدة البيانات',
+      actionButtonText: 'حذف نهائي',
+      actionButtonColor: AppColors.error,
+      onActionButtonPressed: () {
+        Navigator.of(context).pop(true);
+      },
+      child: const Padding(
+        padding: EdgeInsets.symmetric(vertical: 14),
+        child: Text(
+          'هل أنت متأكد من رغبتك في حذف قاعدة البيانات؟ سيتم مسح جميع جهات الاتصال والأرقام المحلية من الجهاز.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            height: 1.5,
+            color: AppColors.textPrimary,
           ),
-          content: const Text(
-            'هل أنت متأكد من رغبتك في حذف قاعدة البيانات؟ سيتم مسح جميع جهات الاتصال والأرقام المحلية من الجهاز.',
-            style: TextStyle(fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('إلغاء'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(
-                'حذف نهائي',
-                style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -163,55 +155,47 @@ class _DatabaseViewState extends State<DatabaseView> {
       return;
     }
 
-    showDialog(
+    AppModalDialog.show(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
-            'اختر ملف قاعدة البيانات',
-            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 250,
-            child: ListView.builder(
-              itemCount: foundFiles.length,
-              itemBuilder: (context, index) {
-                final file = foundFiles[index];
-                final length = file.lengthSync();
-                final sizeStr = length > 1024 * 1024 * 1024
-                    ? '${(length / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB'
-                    : '${(length / (1024 * 1024)).toStringAsFixed(1)} MB';
+      title: 'اختر ملف قاعدة البيانات',
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: foundFiles.length,
+        separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.divider),
+        itemBuilder: (context, index) {
+          final file = foundFiles[index];
+          final length = file.lengthSync();
+          final sizeStr = length > 1024 * 1024 * 1024
+              ? '${(length / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB'
+              : '${(length / (1024 * 1024)).toStringAsFixed(1)} MB';
 
-                return ListTile(
-                  leading: const Icon(AppIcons.database, color: AppColors.primary),
-                  title: Text(
-                    file.path.split('/').last,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  subtitle: Text('الحجم: $sizeStr'),
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('يمكنك إتمام الاستيراد الكامل من الشاشة الرئيسية'),
-                        backgroundColor: AppColors.primary,
-                      ),
-                    );
-                  },
-                );
-              },
+          return ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.scaffoldBackground,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(AppIcons.database, color: AppColors.primary, size: 22),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('إلغاء'),
+            title: Text(
+              file.path.split('/').last,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-          ],
-        ),
+            subtitle: Text('الحجم: $sizeStr', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            onTap: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('يمكنك إتمام الاستيراد الكامل من الشاشة الرئيسية'),
+                  backgroundColor: AppColors.primary,
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

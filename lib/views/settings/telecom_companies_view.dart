@@ -3,6 +3,7 @@ import '../../core/constants/app_icons.dart';
 import '../../core/services/telecom_companies_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/settings_card.dart';
+import '../../core/widgets/app_modal_dialog.dart';
 
 class TelecomCompaniesView extends StatefulWidget {
   const TelecomCompaniesView({super.key});
@@ -36,108 +37,101 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
     final nameController = TextEditingController(text: isEditing ? company.name : '');
     final prefixController = TextEditingController(text: isEditing ? company.prefix : '');
 
-    showDialog(
+    AppModalDialog.show(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            isEditing ? 'تعديل شركة الاتصالات' : 'إضافة شركة اتصالات جديدة',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppColors.textPrimary),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'اسم الشركة',
-                  hintText: 'مثال: يمن موبايل',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: prefixController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'مقدمة الرقم (الفلتر)',
-                  hintText: 'مثال: 77 أو 71',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('إلغاء'),
+      title: isEditing ? 'تعديل شركة الاتصالات' : 'إضافة شركة اتصالات جديدة',
+      actionButtonText: isEditing ? 'حفظ التعديلات' : 'إضافة شركة الاتصالات',
+      actionButtonColor: AppColors.primary,
+      onActionButtonPressed: () async {
+        final name = nameController.text.trim();
+        final prefix = prefixController.text.trim();
+
+        if (name.isEmpty || prefix.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('يرجى ملء جميع الحقول المطلوبة', textAlign: TextAlign.center),
+              backgroundColor: AppColors.error,
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          );
+          return;
+        }
+
+        Navigator.of(context).pop();
+
+        if (isEditing) {
+          await TelecomCompaniesService.instance.updateCompany(index, name, prefix);
+        } else {
+          await TelecomCompaniesService.instance.addCompany(name, prefix);
+        }
+        _loadCompanies();
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          TextField(
+            controller: nameController,
+            decoration: InputDecoration(
+              labelText: 'اسم الشركة',
+              hintText: 'مثال: يمن موبايل',
+              filled: true,
+              fillColor: AppColors.scaffoldBackground,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.cardBorder),
               ),
-              onPressed: () async {
-                final name = nameController.text.trim();
-                final prefix = prefixController.text.trim();
-
-                if (name.isEmpty || prefix.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('يرجى ملء جميع الحقول المطلوبة', textAlign: TextAlign.center),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-
-                Navigator.pop(ctx);
-
-                if (isEditing) {
-                  await TelecomCompaniesService.instance.updateCompany(index, name, prefix);
-                } else {
-                  await TelecomCompaniesService.instance.addCompany(name, prefix);
-                }
-                _loadCompanies();
-              },
-              child: Text(isEditing ? 'حفظ' : 'إضافة'),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.cardBorder),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: prefixController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'مقدمة الرقم (الفلتر)',
+              hintText: 'مثال: 77 أو 71',
+              filled: true,
+              fillColor: AppColors.scaffoldBackground,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.cardBorder),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
       ),
     );
   }
 
   Future<void> _deleteCompany(int index, String name) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppModalDialog.show<bool>(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
-            'حذف شركة الاتصالات',
-            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.error),
+      title: 'حذف شركة الاتصالات',
+      actionButtonText: 'تأكيد الحذف',
+      actionButtonColor: AppColors.error,
+      onActionButtonPressed: () {
+        Navigator.of(context).pop(true);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          'هل أنت متأكد من حذف فلتر "$name"؟ لن تتمكن من التصفية بهذا الرقم في البحث حتى تعيد إضافته.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.5,
+            color: AppColors.textPrimary,
           ),
-          content: Text('هل أنت متأكد من حذف فلتر "$name"؟'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('إلغاء'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(
-                'حذف',
-                style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
         ),
       ),
     );

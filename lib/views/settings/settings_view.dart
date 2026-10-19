@@ -3,6 +3,7 @@ import '../../core/constants/app_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/settings_card.dart';
 import '../../core/widgets/settings_tile.dart';
+import '../../core/widgets/app_modal_dialog.dart';
 import 'appearance_view.dart';
 import 'language_view.dart';
 import 'permissions_view.dart';
@@ -254,31 +255,24 @@ class _SettingsViewState extends State<SettingsView> {
                     size: 22,
                   ),
                   onTap: () {
-                    showDialog(
+                    AppModalDialog.show(
                       context: context,
-                      builder: (ctx) => Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: AlertDialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                      title: 'تسجيل الخروج',
+                      actionButtonText: 'تأكيد تسجيل الخروج',
+                      actionButtonColor: AppColors.error,
+                      onActionButtonPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        child: Text(
+                          'هل أنت متأكد من رغبتك في تسجيل الخروج من الحساب؟',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            height: 1.5,
+                            color: AppColors.textPrimary,
                           ),
-                          title: const Text('تسجيل الخروج'),
-                          content: const Text('هل أنت متأكد من رغبتك في تسجيل الخروج؟'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('إلغاء'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                              },
-                              child: const Text(
-                                'تأكيد',
-                                style: TextStyle(color: AppColors.error),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     );
