@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "design-system-structure": {
+      "source": "zakariaf/Flutter-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/design-system-structure/SKILL.md",
+      "computedHash": "151f4ebabfa4a7b402b9076706636a6ff062adee2d0b5829735fa730728ab159"
+    }
+  }
+}

@@ -6,6 +6,8 @@ import 'database/database_helper.dart';
 import 'core/theme/app_colors.dart';
 import 'features/search_number/presentation/number_search_view.dart';
 import 'views/name_search_view.dart';
+import 'views/settings/settings_view.dart';
+import 'core/constants/app_icons.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -222,6 +224,16 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         toolbarHeight: 60, // الارتفاع الافتراضي للعنوان
         backgroundColor: AppColors.primary,
+        leading: IconButton(
+          icon: const Icon(AppIcons.menu, color: Colors.white),
+          tooltip: 'الإعدادات',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsView()),
+            );
+          },
+        ),
         title: const Text("كاشف الأرقام المحلي", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         // استخدام bottom لإضافة العداد بشكل منفصل ومنظم
