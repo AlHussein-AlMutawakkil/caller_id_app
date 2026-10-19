@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'database/database_helper.dart';
 import 'core/theme/app_colors.dart';
-import 'views/number_search_view.dart';
+import 'features/search_number/presentation/number_search_view.dart';
 import 'views/name_search_view.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -222,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         toolbarHeight: 60, // الارتفاع الافتراضي للعنوان
         backgroundColor: AppColors.primary,
-        title: const Text("كاشف الأرقام اليمني", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text("كاشف الأرقام المحلي", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         // استخدام bottom لإضافة العداد بشكل منفصل ومنظم
         bottom: PreferredSize(
@@ -236,20 +236,30 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.white),
             ),
-            child: Row(
+            child: // هذا هو الكود الصحيح الذي يضمن ثبات الترتيب (النص - الرقم - النص - الأيقونة)
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TweenAnimationBuilder<double>(
-
                   tween: Tween<double>(begin: 0, end: _totalRecords.toDouble()),
                   duration: const Duration(milliseconds: 1500),
                   builder: (context, value, child) {
-                    String formattedValue = value.round().toString().replaceAllMapped(
+                    // 1. تنسيق الرقم بالفواصل
+                    String rawValue = value.round().toString().replaceAllMapped(
                         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'
                     );
+
+                    // 2. "العزل": إضافة رمز Unicode يمنع قلب الأرقام نهائياً
+                    String formattedValue = "\u200E" + rawValue;
+
                     return Text(
-                      "يوجد حالياً $formattedValue سجل في الدليل",
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                      "يوجد حالياً $formattedValue رقم",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     );
                   },
                 ),

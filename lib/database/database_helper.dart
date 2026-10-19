@@ -101,29 +101,22 @@ class DatabaseHelper {
     try {
       final db = await database;
 
-      // الكشف الديناميكي عن اسم العمود الداخلي (هل هو phone أم number) لمنع الانهيار
-      var columns = await db.rawQuery("PRAGMA table_info(nambers_thabeet)");
-      if (columns.isEmpty) {
-        // محاولة جلب الجدول البديل إذا اختلف الاسم
-        final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
-        if (tables.isNotEmpty) {
-          columns = await db.rawQuery("PRAGMA table_info(${tables.first['name']})");
-        }
-      }
+      // 1. تحديد الجدول والأعمدة (استخدمنا الكشف الديناميكي الخاص بك لضمان التوافق)
+      var tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
+      String tableName = tables.isNotEmpty ? tables.first['name'] as String : 'nambers_thabeet';
 
+      var columns = await db.rawQuery("PRAGMA table_info($tableName)");
       String phoneCol = columns.any((c) => c['name'] == 'phone') ? 'phone' : 'number';
       String nameCol = columns.any((c) => c['name'] == 'names') ? 'names' : 'name';
-      String tableName = columns.isNotEmpty ? (columns.first['table']?.toString() ?? 'nambers_thabeet') : 'nambers_thabeet';
-      if(_database != null && tableName == 'nambers_thabeet') {
-        final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
-        if(tables.isNotEmpty) tableName = tables.first['name'] as String;
-      }
 
+      // 2. البحث بالمطابقة التامة (=) بدلاً من LIKE
+      // إزالة علامة % يجعل البحث دقيقاً ومطابقاً للرقم بالكامل
       final results = await db.query(
         tableName,
-        where: '$phoneCol LIKE ?',
-        whereArgs: ['$number%'], // الفهرسة المباشرة بالبادئة لمنع البطء والـ Lock
-        limit: 100,
+        columns: [nameCol, phoneCol],
+        where: '$phoneCol = ?',
+        whereArgs: [number.trim()],
+        limit: 1, // التوقف عند أول نتيجة يسرع البحث بشكل كبير
       );
 
       return results.map((row) => {
@@ -131,6 +124,7 @@ class DatabaseHelper {
         'phone': row[phoneCol]?.toString().trim() ?? 'بدون رقم',
       }).toList();
     } catch (e) {
+      debugPrint("خطأ أثناء البحث: $e");
       return [];
     }
   }

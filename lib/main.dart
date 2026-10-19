@@ -3,7 +3,7 @@ import 'package:phone_state/phone_state.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart' as ov;
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // استدعاء مكتبة الإشعارات
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'database/database_helper.dart';
 import 'home_screen.dart';
@@ -12,25 +12,18 @@ import 'core/theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // تشغيل الخدمة الخلفية بأمان
   await initializeBackgroundService();
-
   runApp(const MyApp());
 }
 
-// =========================================================
-// 1. إعداد الخدمة الخلفية وإنشاء قناة الإشعارات (هنا الحل!)
-// =========================================================
 Future<void> initializeBackgroundService() async {
   final service = FlutterBackgroundService();
 
-  // السحر هنا: إنشاء قناة إشعارات صريحة يرضى عنها نظام أندرويد لمنع الـ Crash
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'caller_id_channel', // معرف القناة (يجب أن يتطابق مع الموجود في الأسفل)
-    'خدمة كاشف الأرقام', // اسم القناة للمستخدم
+    'caller_id_channel',
+    'خدمة كاشف الأرقام',
     description: 'هذه القناة مطلوبة لإبقاء الكاشف نشطاً في الخلفية',
-    importance: Importance.low, // Low لكي لا يصدر صوتاً مزعجاً بشكل مستمر
+    importance: Importance.min,
   );
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -44,8 +37,8 @@ Future<void> initializeBackgroundService() async {
       onStart: onStart,
       autoStart: true,
       isForegroundMode: true,
-      notificationChannelId: 'caller_id_channel', // تم ربطها بالقناة التي أنشأناها بنجاح
-      initialNotificationTitle: 'دليل اليمن',
+      notificationChannelId: 'caller_id_channel',
+      initialNotificationTitle: 'كاشف الإرقام المحلي',
       initialNotificationContent: 'كاشف الأرقام يعمل للحماية',
       foregroundServiceNotificationId: 888,
     ),
@@ -53,9 +46,6 @@ Future<void> initializeBackgroundService() async {
   );
 }
 
-// =========================================================
-// 2. دالة تشغيل مراقب المكالمات في الخلفية
-// =========================================================
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +55,7 @@ void onStart(ServiceInstance service) async {
       String? incomingNumber = event.number;
 
       if (incomingNumber != null && incomingNumber.isNotEmpty) {
+        // 1. جلب البيانات من قاعدة البيانات (مطابقة تامة)
         final dbResults = await DatabaseHelper.instance.searchByNumber(incomingNumber);
 
         String displayName = "رقم غير مسجل";
@@ -72,6 +63,7 @@ void onStart(ServiceInstance service) async {
           displayName = dbResults.first['names'] ?? "رقم غير مسجل";
         }
 
+        // 2. إظهار النافذة إذا لم تكن نشطة
         if (!await ov.FlutterOverlayWindow.isActive()) {
           await ov.FlutterOverlayWindow.showOverlay(
             height: 450,
@@ -83,6 +75,10 @@ void onStart(ServiceInstance service) async {
           );
         }
 
+        // 3. تأخير بسيط (300ms) لضمان أن النافذة جاهزة لاستقبال البيانات عبر overlayListener
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        // 4. إرسال البيانات المجهزة للنافذة
         ov.FlutterOverlayWindow.shareData({
           'name': displayName,
           'phone': incomingNumber
@@ -98,22 +94,15 @@ void onStart(ServiceInstance service) async {
   });
 }
 
-// =========================================================
-// 3. نقطة انطلاق النافذة العائمة (Overlay)
-// =========================================================
 @pragma("vm:entry-point")
 void overlayMain() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MaterialApp(
-
     debugShowCheckedModeBanner: false,
     home: CallerOverlayWindow(),
   ));
 }
 
-// =========================================================
-// 4. التطبيق الرئيسي
-// =========================================================
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -144,7 +133,6 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: AppColors.primary,
-
         fontFamily: 'Cairo',
       ),
       home: const HomeScreen(),
