@@ -8,6 +8,7 @@ import 'language_view.dart';
 import 'permissions_view.dart';
 import 'about_view.dart';
 import 'database_view.dart';
+import 'telecom_companies_view.dart';
 import '../../database/database_helper.dart';
 
 class SettingsView extends StatefulWidget {
@@ -137,9 +138,21 @@ class _SettingsViewState extends State<SettingsView> {
               ],
             ),
 
-            // 3. بطاقة قاعدة البيانات وتحت التطوير
+            // 3. بطاقة شركات الاتصالات وقاعدة البيانات
             SettingsCard(
               children: [
+                SettingsTile(
+                  leading: const Icon(AppIcons.telecom, color: AppColors.textPrimary, size: 22),
+                  title: 'شركات الاتصالات',
+                  trailing: const Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
+                  showDivider: true,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TelecomCompaniesView()),
+                    );
+                  },
+                ),
                 SettingsTile(
                   leading: const Icon(AppIcons.database, color: AppColors.textPrimary, size: 22),
                   title: 'قاعدة البيانات',
@@ -150,7 +163,6 @@ class _SettingsViewState extends State<SettingsView> {
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  showDivider: true,
                   onTap: () async {
                     await Navigator.push(
                       context,
@@ -158,11 +170,6 @@ class _SettingsViewState extends State<SettingsView> {
                     );
                     _updateRecords();
                   },
-                ),
-                SettingsTile(
-                  leading: const Icon(AppIcons.units, color: AppColors.textPrimary, size: 22),
-                  title: 'تحت التطوير',
-                  onTap: () {},
                 ),
               ],
             ),

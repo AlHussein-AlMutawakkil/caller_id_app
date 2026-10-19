@@ -3,29 +3,8 @@ import '../../core/constants/app_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/settings_card.dart';
 
-class LanguageView extends StatefulWidget {
+class LanguageView extends StatelessWidget {
   const LanguageView({super.key});
-
-  @override
-  State<LanguageView> createState() => _LanguageViewState();
-}
-
-class _LanguageViewState extends State<LanguageView> {
-  // اللغة العربية هي المفعلة حالياً
-  final int _selectedLanguageIndex = 1;
-
-  final List<String> _languages = [
-    'English (US)',
-    'Arabic (Arabic)',
-    'German (Deutsch)',
-    'Spanish (Español)',
-    'French (France)',
-    'Italian (Italiano)',
-    'Japanese (日本語)',
-    'Korean (Korean)',
-    'Portuguese (Portugal)',
-    'Portuguese (Brasil)',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -55,62 +34,30 @@ class _LanguageViewState extends State<LanguageView> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           children: [
             SettingsCard(
-              children: List.generate(_languages.length, (index) {
-                final isSelected = _selectedLanguageIndex == index;
-                final isLast = index == _languages.length - 1;
-
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        if (index != 1) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'اللغة العربية هي المتوفرة حالياً في التطبيق',
-                                textAlign: TextAlign.center,
-                              ),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _languages[index],
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            if (isSelected)
-                              const Icon(
-                                AppIcons.checked,
-                                color: AppColors.textPrimary,
-                                size: 22,
-                              ),
-                          ],
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    children: const [
+                      Expanded(
+                        child: Text(
+                          'Arabic (العربية)',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                    if (!isLast)
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: AppColors.divider,
-                        indent: 20,
-                        endIndent: 20,
+                      Icon(
+                        AppIcons.checked,
+                        color: AppColors.textPrimary,
+                        size: 22,
                       ),
-                  ],
-                );
-              }),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),

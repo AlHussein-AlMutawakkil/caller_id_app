@@ -17,6 +17,10 @@ class AppIcons {
   static const IconData units = Icons.grid_view_rounded;
 
   // أيقونات الإعدادات العامة
+  static const IconData telecom = Icons.cell_tower_rounded;
+  static const IconData add = Icons.add_rounded;
+  static const IconData edit = Icons.edit_outlined;
+  static const IconData more = Icons.more_vert_rounded;
   static const IconData database = Icons.storage_rounded;
   static const IconData refresh = Icons.refresh_rounded;
   static const IconData importDb = Icons.drive_folder_upload_rounded;

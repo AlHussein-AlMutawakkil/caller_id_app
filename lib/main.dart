@@ -10,9 +10,12 @@ import 'home_screen.dart';
 import 'overlay_window.dart';
 import 'core/theme/app_colors.dart';
 
+import 'core/services/telecom_companies_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeBackgroundService();
+  await TelecomCompaniesService.instance.getCompanies();
   runApp(const MyApp());
 }
 
