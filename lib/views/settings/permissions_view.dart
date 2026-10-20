@@ -85,7 +85,7 @@ class _PermissionsViewState extends State<PermissionsView> {
   Widget build(BuildContext context) {
     final permissionsList = [
       _PermissionItem(
-        title: 'حالة الهاتف والمكالمات',
+        title: 'الهاتف وسجل المكالمات',
         icon: AppIcons.phone,
         isGranted: _phoneGranted,
         onTap: _requestPhone,
@@ -97,13 +97,13 @@ class _PermissionsViewState extends State<PermissionsView> {
         onTap: _requestOverlay,
       ),
       _PermissionItem(
-        title: 'الوصول لملفات قاعدة البيانات (التخزين)',
+        title: 'التخزين',
         icon: AppIcons.storage,
         isGranted: _storageGranted,
         onTap: _requestStorage,
       ),
       _PermissionItem(
-        title: 'الإشعارات والعمل في الخلفية',
+        title: 'الإشعارات',
         icon: AppIcons.notifications,
         isGranted: _notificationGranted,
         onTap: _requestNotification,
@@ -119,7 +119,8 @@ class _PermissionsViewState extends State<PermissionsView> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
+            icon: const Icon(AppIcons.back,
+                color: AppColors.textPrimary, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text(

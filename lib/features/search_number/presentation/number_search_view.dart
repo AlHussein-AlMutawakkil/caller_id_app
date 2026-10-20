@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_result_card.dart';
 import '../../../core/widgets/smart_search_indicator.dart';
 import '../cubit/search_number_cubit.dart';
 import '../cubit/search_number_state.dart';
@@ -33,82 +35,159 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
     super.dispose();
   }
 
+  void _performSearch() {
+    final query = _controller.text.trim();
+    if (query.isEmpty) return;
+    FocusScope.of(context).unfocus();
+    context.read<SearchNumberCubit>().search(query);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('البحث بالرقم', style: TextStyle(fontFamily: 'Cairo')),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _controller,
-              keyboardType: TextInputType.phone,
-              onChanged: (value) {
-                context.read<SearchNumberCubit>().search(value);
-              },
-              decoration: InputDecoration(
-                hintText: 'أدخل رقم الهاتف...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _controller.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _controller.clear();
-                    context.read<SearchNumberCubit>().search('');
-                  },
-                )
-                    : null,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          child: Column(
+            children: [
+              TextField(
+                controller: _controller,
+                keyboardType: TextInputType.phone,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18),
+                onSubmitted: (_) => _performSearch(),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.Secondary,
+                  prefixIcon:
+                      const Icon(Icons.dialpad, color: AppColors.primary),
+                  suffixIcon: _controller.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear,
+                              color: AppColors.textSecondary),
+                          onPressed: () {
+                            setState(() {
+                              _controller.clear();
+                            });
+                          },
+                        )
+                      : null,
+                  hintText: 'أدخل رقم الهاتف المراد البحث عنه...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (_) {
+                  setState(() {});
+                },
               ),
-            ),
-          ),
-          Expanded(
-            child: BlocBuilder<SearchNumberCubit, SearchNumberState>(
-              builder: (context, state) {
-                if (state is SearchNumberLoading) {
-                  return const Center(child: SmartSearchIndicator(statusText: 'جاري البحث في قاعدة البيانات...',));
-                }
-
-                if (state is SearchNumberError) {
-                  return Center(
-                    child: Text(state.message, style: const TextStyle(fontFamily: 'Cairo')),
-                  );
-                }
-
-                if (state is SearchNumberSuccess) {
-                  if (state.results.isEmpty) {
-                    return const Center(
-                      child: Text('لا توجد نتائج مطابقة', style: TextStyle(fontFamily: 'Cairo')),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: state.results.length,
-                    itemBuilder: (context, index) {
-                      final item = state.results[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        child: ListTile(
-                          leading: const CircleAvatar(child: Icon(Icons.person)),
-                          title: Text(item.name, style: const TextStyle(fontFamily: 'Cairo')),
-                          subtitle: Text(item.phone),
+              const SizedBox(height: 16),
+              // زر البحث بالرقم المطلوب
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: _performSearch,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        "بحث بالرقم",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                      );
-                    },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: BlocBuilder<SearchNumberCubit, SearchNumberState>(
+            builder: (context, state) {
+              if (state is SearchNumberLoading) {
+                return const Center(
+                  child: SmartSearchIndicator(
+                    statusText: 'جاري البحث في قاعدة البيانات...',
+                  ),
+                );
+              }
+
+              if (state is SearchNumberError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text(
+                      state.message,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              if (state is SearchNumberSuccess) {
+                if (state.results.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'لا توجد نتائج مطابقة',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   );
                 }
 
-                return const Center(
-                  child: Text('ابدأ بكتابة الرقم للبحث', style: TextStyle(fontFamily: 'Cairo')),
+                // عرض نتائج البحث في بطاقة موحدة بخطوط فاصلة دقيقة (مطابقة للصورة 2)
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: AppResultListContainer(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    children: [
+                      for (final item in state.results)
+                        AppResultTile(
+                          name: item.name,
+                          phone: item.phone,
+                        ),
+                    ],
+                  ),
                 );
-              },
-            ),
+              }
+
+              return const Center(
+                child: Text(
+                  'أدخل رقم الهاتف واضغط على بحث بالرقم',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

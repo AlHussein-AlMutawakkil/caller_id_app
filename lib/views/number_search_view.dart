@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/database_helper.dart';
 import '../core/theme/app_colors.dart';
+import '../core/widgets/app_result_card.dart';
 
 class NumberSearchView extends StatefulWidget {
   const NumberSearchView({super.key});
@@ -25,7 +26,8 @@ class _NumberSearchViewState extends State<NumberSearchView> {
       _isLoading = true;
     });
 
-    List<Map<String, dynamic>> dbResults = await DatabaseHelper.instance.searchByNumber(query);
+    List<Map<String, dynamic>> dbResults =
+        await DatabaseHelper.instance.searchByNumber(query);
 
     List<Map<String, dynamic>> separatedResults = [];
     for (var row in dbResults) {
@@ -64,9 +66,12 @@ class _NumberSearchViewState extends State<NumberSearchView> {
                 textAlign: TextAlign.left,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.grey.shade100,
-                  prefixIcon: const Icon(Icons.dialpad, color: AppColors.primary),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  fillColor: AppColors.Secondary,
+                  prefixIcon:
+                      const Icon(Icons.dialpad, color: AppColors.primary),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none),
                   hintText: "أدخل الرقم المراد البحث عنه",
                 ),
               ),
@@ -75,7 +80,8 @@ class _NumberSearchViewState extends State<NumberSearchView> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   minimumSize: const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: _search,
                 child: const Row(
@@ -83,7 +89,11 @@ class _NumberSearchViewState extends State<NumberSearchView> {
                   children: [
                     Icon(Icons.search, color: Colors.white),
                     SizedBox(width: 8),
-                    Text("بحث بالرقم", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text("بحث بالرقم",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -104,63 +114,32 @@ class _NumberSearchViewState extends State<NumberSearchView> {
           children: [
             CircularProgressIndicator(color: AppColors.primary),
             SizedBox(height: 12),
-            Text("جاري فحص وبحث السجلات بدقة...", style: TextStyle(color: Colors.blueGrey, fontSize: 14)),
+            Text("جاري فحص وبحث السجلات بدقة...",
+                style: TextStyle(color: Colors.blueGrey, fontSize: 14)),
           ],
         ),
       );
     }
 
     if (_results.isEmpty) {
-      return const Center(child: Text("لا توجد نتائج لعرضها حالياً", style: TextStyle(fontSize: 15, color: Colors.blueGrey)));
+      return const Center(
+          child: Text("لا توجد نتائج لعرضها حالياً",
+              style: TextStyle(fontSize: 15, color: Colors.blueGrey)));
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 16, top: 4),
-      itemCount: _results.length,
-      itemBuilder: (context, index) {
-        final item = _results[index];
-        return Card(
-          elevation: 1.5,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(14.0),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: AppColors.primary.withOpacity(0.08),
-                  child: const Icon(Icons.person, color: AppColors.primary),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item['names'] ?? 'بدون اسم',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primary),
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          const Icon(Icons.phone, size: 15, color: Colors.blue),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              item['phone'] ?? 'بدون رقم',
-                              style: const TextStyle(color: Colors.blue, fontSize: 14, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 20),
+      child: AppResultListContainer(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        children: [
+          for (final item in _results)
+            AppResultTile(
+              name: item['names'] ?? 'بدون اسم',
+              phone: item['phone'] ?? '',
             ),
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

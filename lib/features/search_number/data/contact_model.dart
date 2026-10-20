@@ -12,8 +12,8 @@ class ContactModel {
   factory ContactModel.fromMap(Map<String, dynamic> map) {
     return ContactModel(
       id: map['id'] as int?,
-      name: map['name'] ?? 'بدون اسم',
-      phone: map['phone'] ?? '',
+      name: (map['names'] ?? map['name'] ?? 'بدون اسم').toString(),
+      phone: (map['phone'] ?? '').toString(),
     );
   }
 }

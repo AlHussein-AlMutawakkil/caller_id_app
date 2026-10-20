@@ -5,9 +5,10 @@ class AppColors {
 
   // اللون الداكن الأساسي للـ AppBar والعناصر البارزة
   static const Color primary = Color(0xFF1E232C);
+  static const Color Secondary = Color(0xFFeaeaea);
 
   // اللون الأزرق النيلي الغامق المخصص لعرض الأسماء المطابقة
-  static const Color textDark = Color(0xFF0A5C66);
+  static const Color textDark = Color(0xFFeaeaea);
 
   // ألوان الخلفيات والكروت
   static const Color scaffoldBackground = Color(0xFFF7F8FA);
