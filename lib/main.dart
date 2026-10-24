@@ -69,7 +69,7 @@ void onStart(ServiceInstance service) async {
         // 2. إظهار النافذة إذا لم تكن نشطة
         if (!await ov.FlutterOverlayWindow.isActive()) {
           await ov.FlutterOverlayWindow.showOverlay(
-            height: 450,
+            height: 1050,
             width: ov.WindowSize.matchParent,
             alignment: ov.OverlayAlignment.center,
             flag: ov.OverlayFlag.defaultFlag,
@@ -100,9 +100,16 @@ void onStart(ServiceInstance service) async {
 @pragma("vm:entry-point")
 void overlayMain() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MaterialApp(
+  runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: CallerOverlayWindow(),
+    theme: ThemeData(
+      primaryColor: AppColors.primary,
+      fontFamily: 'Cairo',
+    ),
+    home: const Directionality(
+      textDirection: TextDirection.rtl,
+      child: CallerOverlayWindow(),
+    ),
   ));
 }
 
