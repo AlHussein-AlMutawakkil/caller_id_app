@@ -11,6 +11,7 @@ import 'about_view.dart';
 import 'database_view.dart';
 import 'telecom_companies_view.dart';
 import '../../database/database_helper.dart';
+import 'license_view.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -121,20 +122,19 @@ class _SettingsViewState extends State<SettingsView> {
               ],
             ),
 
-            // 2. بطاقة الحساب (مطابقة للصورة 3)
+            // 2. بطاقة الترخيص
             SettingsCard(
               children: [
                 SettingsTile(
-                  leading: const Icon(AppIcons.account, color: AppColors.textPrimary, size: 22),
-                  title: 'الحساب',
-                  trailing: const Text(
-                    '...alhossenail776472265',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  onTap: () {},
+                  leading: const Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 22),
+                  title: 'الترخيص',
+                  trailing: const Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LicenseView()),
+                    );
+                  },
                 ),
               ],
             ),

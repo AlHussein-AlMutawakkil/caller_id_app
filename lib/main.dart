@@ -9,8 +9,9 @@ import 'database/database_helper.dart';
 import 'home_screen.dart';
 import 'overlay_window.dart';
 import 'core/theme/app_colors.dart';
-
 import 'core/services/telecom_companies_service.dart';
+import 'core/services/activation_service.dart';
+import 'views/activation/activation_gate_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,10 +30,12 @@ Future<void> initializeBackgroundService() async {
     importance: Importance.min,
   );
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
   await service.configure(
@@ -55,11 +58,16 @@ void onStart(ServiceInstance service) async {
 
   PhoneState.stream.listen((event) async {
     if (event.status == PhoneStateStatus.CALL_INCOMING) {
+      // 0. التحقق من تفعيل التطبيق أولاً قبل عرض النافذة
+      final isActivated = await ActivationService.instance.isActivated();
+      if (!isActivated) return;
+
       String? incomingNumber = event.number;
 
       if (incomingNumber != null && incomingNumber.isNotEmpty) {
         // 1. جلب البيانات من قاعدة البيانات (مطابقة تامة)
-        final dbResults = await DatabaseHelper.instance.searchByNumber(incomingNumber);
+        final dbResults =
+            await DatabaseHelper.instance.searchByNumber(incomingNumber);
 
         String displayName = "رقم غير مسجل";
         if (dbResults.isNotEmpty) {
@@ -84,7 +92,7 @@ void onStart(ServiceInstance service) async {
         // 4. إرسال البيانات المجهزة للنافذة
         ov.FlutterOverlayWindow.shareData({
           'name': displayName,
-          'phone': incomingNumber
+          'phone': incomingNumber,
         });
       }
     }
@@ -121,10 +129,27 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  bool _isCheckingActivation = true;
+  bool _isActivated = false;
+
   @override
   void initState() {
     super.initState();
-    _requestRequiredPermissions();
+    _checkActivation();
+  }
+
+  Future<void> _checkActivation() async {
+    final activated = await ActivationService.instance.isActivated();
+    if (mounted) {
+      setState(() {
+        _isActivated = activated;
+        _isCheckingActivation = false;
+      });
+    }
+
+    if (activated) {
+      await _requestRequiredPermissions();
+    }
   }
 
   Future<void> _requestRequiredPermissions() async {
@@ -145,7 +170,23 @@ class _MyAppState extends State<MyApp> {
         primaryColor: AppColors.primary,
         fontFamily: 'Cairo',
       ),
-      home: const HomeScreen(),
+      home: _isCheckingActivation
+          ? const Scaffold(
+              backgroundColor: AppColors.scaffoldBackground,
+              body: Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+            )
+          : _isActivated
+              ? const HomeScreen()
+              : ActivationGateView(
+                  onActivated: () {
+                    setState(() {
+                      _isActivated = true;
+                    });
+                    _requestRequiredPermissions();
+                  },
+                ),
     );
   }
 }

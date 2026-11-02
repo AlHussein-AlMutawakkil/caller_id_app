@@ -15,7 +15,8 @@ class CallerOverlayWindow extends StatefulWidget {
 class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
   String _phone = "";
   List<String> _namesList = [];
-  bool _isExpanded = false; // تبدأ مغلقة افتراضياً عند ورود المكالمة كما طلب المستخدم
+  bool _isExpanded =
+      false; // تبدأ مغلقة افتراضياً عند ورود المكالمة كما طلب المستخدم
 
   @override
   void initState() {
@@ -44,7 +45,8 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
   }
 
   // إضافة الرقم والاسم مباشرة إلى جهات الاتصال في نظام أندرويد
-  Future<void> _addToContacts({required String name, required String phone}) async {
+  Future<void> _addToContacts(
+      {required String name, required String phone}) async {
     final cleanName = (name.isEmpty || name == "رقم غير مسجل") ? "" : name;
     try {
       final intent = AndroidIntent(
@@ -86,7 +88,8 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
         content: Text(
           'تم نسخ الرقم: $phone',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
+          style:
+              const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Cairo'),
         ),
         backgroundColor: AppColors.primary,
         duration: const Duration(seconds: 2),
@@ -156,7 +159,8 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                 Expanded(
                   child: Text(
                     _phone.isEmpty ? "جاري البحث..." : _phone,
-                    textDirection: _phone.isEmpty ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        _phone.isEmpty ? TextDirection.rtl : TextDirection.ltr,
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -193,10 +197,12 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                     size: 20,
                   ),
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   visualDensity: VisualDensity.compact,
                   tooltip: 'إغلاق',
-                  onPressed: () async => await FlutterOverlayWindow.closeOverlay(),
+                  onPressed: () async =>
+                      await FlutterOverlayWindow.closeOverlay(),
                 ),
               ],
             ),
@@ -211,7 +217,8 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
     final bool isUnregistered = _namesList.isEmpty ||
         (_namesList.length == 1 && _namesList.first == "رقم غير مسجل");
     final double availableHeight = MediaQuery.of(context).size.height;
-    final double maxContainerHeight = availableHeight > 150 ? (availableHeight - 20) : 380;
+    final double maxContainerHeight =
+        availableHeight > 150 ? (availableHeight - 20) : 380;
 
     return Container(
       width: double.infinity,
@@ -248,7 +255,8 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                   // عرض الرقم فقط كما طلب المستخدم بدقة
                   Text(
                     _phone.isEmpty ? "كاشف الأرقام" : _phone,
-                    textDirection: _phone.isEmpty ? TextDirection.rtl : TextDirection.ltr,
+                    textDirection:
+                        _phone.isEmpty ? TextDirection.rtl : TextDirection.ltr,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -300,7 +308,8 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                     ),
                     tooltip: 'إغلاق',
                     visualDensity: VisualDensity.compact,
-                    onPressed: () async => await FlutterOverlayWindow.closeOverlay(),
+                    onPressed: () async =>
+                        await FlutterOverlayWindow.closeOverlay(),
                   ),
                 ],
               ),
