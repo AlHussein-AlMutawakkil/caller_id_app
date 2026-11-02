@@ -256,20 +256,23 @@ class _ActivationGateViewState extends State<ActivationGateView> {
                           child: Column(
                             children: [
                               Container(
-                                width: 76,
-                                height: 76,
+                                width: 84,
+                                height: 84,
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.08),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: AppColors.primary.withOpacity(0.18),
-                                      width: 1.5),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.lock_rounded,
-                                    size: 38,
-                                    color: AppColors.primary,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Image.asset(
+                                    'assets/icon/icon_2.png',
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                               ),

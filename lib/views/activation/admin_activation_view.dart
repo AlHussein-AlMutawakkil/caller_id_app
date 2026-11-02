@@ -220,12 +220,10 @@ class _AdminActivationViewState extends State<AdminActivationView> {
                       items: ActivationDuration.values,
                       itemLabel: (d) => d.labelAr,
                       onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedDuration = val;
-                            _generatedCode = null;
-                          });
-                        }
+                        setState(() {
+                          _selectedDuration = val;
+                          _generatedCode = null;
+                        });
                       },
                     ),
                     const SizedBox(height: 18),

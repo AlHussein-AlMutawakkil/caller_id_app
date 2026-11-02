@@ -172,16 +172,24 @@ class _LicenseViewState extends State<LicenseView> {
                             onTap: _handleSecretTap,
                             behavior: HitTestBehavior.opaque,
                             child: Container(
-                              width: 68,
-                              height: 68,
+                              width: 72,
+                              height: 72,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF4CAF50).withOpacity(0.09),
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
-                              child: const Icon(
-                                Icons.verified_rounded,
-                                color: Color(0xFF4CAF50),
-                                size: 38,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: Image.asset(
+                                  'assets/icon/icon_2.png',
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                           ),
