@@ -101,15 +101,19 @@ class AppResultTile extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // أيقونة الأفاتار الرمزية
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.primary.withOpacity(0.07),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: AppColors.primary,
-                  size: 22,
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.primary.withOpacity(0.07),
+                  child: const Icon(
+                    Icons.person_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
                 ),
               ),
               const SizedBox(width: 14),
@@ -125,11 +129,11 @@ class AppResultTile extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
+                        height: 1.35,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -156,26 +160,32 @@ class AppResultTile extends StatelessWidget {
 
               // زر نسخ الرقم
               if (showCopyButton)
-                IconButton(
-                  icon: const Icon(
-                    Icons.copy_rounded,
-                    size: 19,
-                    color: AppColors.textSecondary,
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.copy_rounded,
+                      size: 19,
+                      color: AppColors.textSecondary,
+                    ),
+                    tooltip: 'نسخ الرقم',
+                    onPressed: () => _copyToClipboard(context),
                   ),
-                  tooltip: 'نسخ الرقم',
-                  onPressed: () => _copyToClipboard(context),
                 ),
 
               // شارة / سهم الأسماء المتعددة إن وجدت
               if (hasMultipleNames)
-                IconButton(
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.textSecondary,
-                    size: 24,
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                      size: 24,
+                    ),
+                    tooltip: 'عرض الأسماء المرتبطة',
+                    onPressed: onMoreNamesPressed,
                   ),
-                  tooltip: 'عرض الأسماء المرتبطة',
-                  onPressed: onMoreNamesPressed,
                 ),
             ],
           ),

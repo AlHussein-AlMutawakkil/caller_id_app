@@ -107,22 +107,26 @@ class _NameSearchViewState extends State<NameSearchView> {
                 padding:
                     const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.scaffoldBackground,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.cardBorder),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textSecondary,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.scaffoldBackground,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.cardBorder),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ),
@@ -135,7 +139,9 @@ class _NameSearchViewState extends State<NameSearchView> {
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
+                          height: 1.35,
                         ),
+                        softWrap: true,
                       ),
                     ),
                   ],

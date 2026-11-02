@@ -453,16 +453,19 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // أفاتار الشخص الدائري المعتمد
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.primary.withOpacity(0.07),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: AppColors.primary,
-                  size: 22,
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.primary.withOpacity(0.07),
+                  child: const Icon(
+                    Icons.person_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -474,9 +477,9 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Flexible(
+                        Expanded(
                           child: Text(
                             name,
                             style: const TextStyle(
@@ -484,10 +487,9 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
                               fontFamily: 'Cairo',
-                              height: 1.25,
+                              height: 1.35,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
                           ),
                         ),
                         // عرض عدد الأسماء الموجودة في دائرة بجانب الاسم
@@ -496,6 +498,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                           Container(
                             width: 20,
                             height: 20,
+                            margin: const EdgeInsets.only(top: 2),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withOpacity(0.08),
                               shape: BoxShape.circle,
@@ -515,7 +518,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -543,20 +546,26 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
               const SizedBox(width: 8),
 
               // زر إضافة إلى جهات الاتصال المفعل المدمج (بدون حلقة)
-              _buildCompactActionButton(
-                icon: Icons.person_add_alt_1_rounded,
-                iconColor: AppColors.primary,
-                tooltip: 'إضافة لجهات الاتصال',
-                onTap: () => _addToContacts(name: name, phone: _phone),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: _buildCompactActionButton(
+                  icon: Icons.person_add_alt_1_rounded,
+                  iconColor: AppColors.primary,
+                  tooltip: 'إضافة لجهات الاتصال',
+                  onTap: () => _addToContacts(name: name, phone: _phone),
+                ),
               ),
               const SizedBox(width: 4),
 
               // زر نسخ الرقم المدمج (بدون حلقة)
-              _buildCompactActionButton(
-                icon: Icons.copy_rounded,
-                iconColor: AppColors.textSecondary,
-                tooltip: 'نسخ الرقم',
-                onTap: () => _copyPhone(context, _phone),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: _buildCompactActionButton(
+                  icon: Icons.copy_rounded,
+                  iconColor: AppColors.textSecondary,
+                  tooltip: 'نسخ الرقم',
+                  onTap: () => _copyPhone(context, _phone),
+                ),
               ),
             ],
           ),
