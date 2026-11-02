@@ -43,12 +43,8 @@ class _DatabaseViewState extends State<DatabaseView> {
 
       if (exists) {
         final length = await file.length();
-        if (length > 1024 * 1024 * 1024) {
-          sizeStr = '${(length / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
-        } else {
-          sizeStr = '${(length / (1024 * 1024)).toStringAsFixed(1)} MB';
-        }
-        count = await DatabaseHelper.instance.getTotalRecordsCount();
+        sizeStr = _formatFileSize(length);
+        count = await DatabaseHelper.instance.getTotalRecordsCount(forceRefresh: true);
       }
 
       if (mounted) {
@@ -74,6 +70,14 @@ class _DatabaseViewState extends State<DatabaseView> {
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]},',
     );
+  }
+
+  String _formatFileSize(int length) {
+    if (length > 1024 * 1024 * 1024) {
+      return '${(length / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+    } else {
+      return '${(length / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
   }
 
   Future<void> _deleteDatabase() async {
@@ -113,7 +117,8 @@ class _DatabaseViewState extends State<DatabaseView> {
     }
   }
 
-  Future<void> _scanAndImportDatabase() async {
+  /// فحص مجلد التنزيلات وعرض ملفات قاعدة البيانات المتوفرة مباشرة بدون أي كاش
+  Future<void> _scanAndImportDatabaseFromDownloads() async {
     if (!await Permission.manageExternalStorage.isGranted) {
       await Permission.manageExternalStorage.request();
     }
@@ -122,42 +127,46 @@ class _DatabaseViewState extends State<DatabaseView> {
     }
 
     List<File> foundFiles = [];
+    final scanDirs = [
+      Directory('/storage/emulated/0/Download'),
+      Directory('/storage/emulated/0/Downloads'),
+      Directory('/storage/emulated/0/الكاشف'),
+    ];
 
-    void safeScan(Directory dir) {
+    for (var dir in scanDirs) {
       try {
-        var entities = dir.listSync(recursive: false);
-        for (var entity in entities) {
-          if (entity is File) {
-            if (entity.path.toLowerCase().endsWith('.db') ||
-                entity.path.toLowerCase().contains('contactsdb')) {
-              foundFiles.add(entity);
+        if (dir.existsSync()) {
+          var entities = dir.listSync(recursive: false);
+          for (var entity in entities) {
+            if (entity is File) {
+              final path = entity.path.toLowerCase();
+              if (path.endsWith('.db') ||
+                  path.endsWith('.sqlite') ||
+                  path.endsWith('.sqlite3') ||
+                  path.contains('contactsdb')) {
+                if (!foundFiles.any((f) => f.path == entity.path)) {
+                  foundFiles.add(entity);
+                }
+              }
             }
           }
         }
       } catch (_) {}
     }
 
-    safeScan(Directory('/storage/emulated/0/Download'));
-    safeScan(Directory('/storage/emulated/0/الكاشف'));
-
     if (!mounted) return;
 
     if (foundFiles.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'لم يتم العثور على ملفات قاعدة بيانات (.db) في مجلد Download',
-            textAlign: TextAlign.center,
-          ),
-          backgroundColor: AppColors.error,
-        ),
+      _showSnackBar(
+        'لم يتم العثور على أي ملفات قاعدة بيانات (.db) في مجلد التنزيلات (Download)',
+        isError: true,
       );
       return;
     }
 
     AppModalDialog.show(
       context: context,
-      title: 'اختر ملف قاعدة البيانات',
+      title: 'اختر قاعدة بيانات من التنزيلات',
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -166,9 +175,7 @@ class _DatabaseViewState extends State<DatabaseView> {
         itemBuilder: (context, index) {
           final file = foundFiles[index];
           final length = file.lengthSync();
-          final sizeStr = length > 1024 * 1024 * 1024
-              ? '${(length / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB'
-              : '${(length / (1024 * 1024)).toStringAsFixed(1)} MB';
+          final sizeStr = _formatFileSize(length);
 
           return ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -181,21 +188,148 @@ class _DatabaseViewState extends State<DatabaseView> {
               child: const Icon(AppIcons.database, color: AppColors.primary, size: 22),
             ),
             title: Text(
-              file.path.split('/').last,
+              p.basename(file.path),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
             subtitle: Text('الحجم: $sizeStr', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            trailing: const Icon(AppIcons.chevronRight, size: 18, color: AppColors.textSecondary),
             onTap: () {
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('يمكنك إتمام الاستيراد الكامل من الشاشة الرئيسية'),
-                  backgroundColor: AppColors.primary,
-                ),
-              );
+              _confirmAndImport(file);
             },
           );
         },
+      ),
+    );
+  }
+
+  /// نافذة التأكيد قبل البدء في عملية الاستيراد والاستبدال
+  Future<void> _confirmAndImport(File file) async {
+    // 1. التحقق من سلامة وصلاحية ملف الـ SQLite
+    final isValid = await DatabaseHelper.instance.isValidSqliteFile(file.path);
+    if (!isValid) {
+      _showSnackBar('الملف المختار ليس ملف قاعدة بيانات SQLite صالح (.db)', isError: true);
+      return;
+    }
+
+    final length = await file.length();
+    final sizeStr = _formatFileSize(length);
+    final fileName = p.basename(file.path);
+
+    if (!mounted) return;
+
+    final confirmed = await AppModalDialog.show<bool>(
+      context: context,
+      title: 'تأكيد استيراد قاعدة البيانات',
+      actionButtonText: 'بدء الاستيراد',
+      actionButtonColor: AppColors.primary,
+      onActionButtonPressed: () {
+        Navigator.of(context).pop(true);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.scaffoldBackground,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.cardBorder),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(AppIcons.database, color: AppColors.primary, size: 22),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          fileName,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.storage_outlined, color: AppColors.textSecondary, size: 18),
+                      const SizedBox(width: 8),
+                      Text('الحجم: $sizeStr', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: const [
+                      Icon(Icons.folder_outlined, color: AppColors.textSecondary, size: 18),
+                      SizedBox(width: 8),
+                      Text('المصدر: مجلد التنزيلات (مباشر بدون كاش)', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'تنبيه: سيتم استبدال قاعدة البيانات الحالية بهذه القاعدة ونقلها مباشرة دون استهلاك مساحة الكاش.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      _executeImportWithProgress(file);
+    }
+  }
+
+  /// تنفيذ عملية الاستيراد مع عرض شريط تقدم حي والنسبة المئوية (0% - 100%)
+  void _executeImportWithProgress(File file) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => _ImportProgressDialog(
+        file: file,
+        onFinished: () async {
+          Navigator.of(dialogCtx).pop();
+          await _loadDatabaseInfo();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'تم استيراد قاعدة البيانات بنجاح! الإجمالي: \u200E${_formatNumber(_totalRecords)}\u200E رقم',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                backgroundColor: AppColors.success,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        },
+        onError: (errorMsg) {
+          Navigator.of(dialogCtx).pop();
+          _showSnackBar('فشل الاستيراد: $errorMsg', isError: true);
+        },
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, textAlign: TextAlign.center),
+        backgroundColor: isError ? AppColors.error : AppColors.primary,
+        duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
   }
@@ -229,7 +363,7 @@ class _DatabaseViewState extends State<DatabaseView> {
             : ListView(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 children: [
-                  // 1. كارد معلومات وحالة قاعدة البيانات (مطابق لتصميم الكروت)
+                  // 1. كارد معلومات وحالة قاعدة البيانات
                   SettingsCard(
                     children: [
                       SettingsTile(
@@ -259,13 +393,27 @@ class _DatabaseViewState extends State<DatabaseView> {
                       SettingsTile(
                         leading: const Icon(Icons.pin_outlined, color: AppColors.textPrimary, size: 22),
                         title: 'إجمالي الأرقام المسجلة',
-                        trailing: Text(
-                          '${_formatNumber(_totalRecords)} رقم',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _formatNumber(_totalRecords),
+                              textDirection: TextDirection.ltr,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'رقم',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                         showDivider: true,
                       ),
@@ -297,10 +445,10 @@ class _DatabaseViewState extends State<DatabaseView> {
                       SettingsTile(
                         leading: const Icon(AppIcons.importDb, color: AppColors.textPrimary, size: 22),
                         title: 'استيراد قاعدة بيانات',
-                        subtitle: 'البحث عن ملفات (.db) واستيرادها',
+                        subtitle: 'البحث عن ملفات (.db) في مجلد التنزيلات واستيرادها',
                         trailing: const Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
                         showDivider: true,
-                        onTap: _scanAndImportDatabase,
+                        onTap: _scanAndImportDatabaseFromDownloads,
                       ),
                       SettingsTile(
                         leading: const Icon(AppIcons.refresh, color: AppColors.textPrimary, size: 22),
@@ -330,6 +478,186 @@ class _DatabaseViewState extends State<DatabaseView> {
                   ),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+/// نافذة مخصصة لعرض التقدم المئوي للاستيراد لحظة بلحظة مع شريط تقدم تفاعلي
+class _ImportProgressDialog extends StatefulWidget {
+  final File file;
+  final VoidCallback onFinished;
+  final ValueChanged<String> onError;
+
+  const _ImportProgressDialog({
+    required this.file,
+    required this.onFinished,
+    required this.onError,
+  });
+
+  @override
+  State<_ImportProgressDialog> createState() => _ImportProgressDialogState();
+}
+
+class _ImportProgressDialogState extends State<_ImportProgressDialog> {
+  double _progress = 0.0;
+  int _copiedBytes = 0;
+  int _totalBytes = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _totalBytes = widget.file.lengthSync();
+    _startImport();
+  }
+
+  Future<void> _startImport() async {
+    try {
+      await DatabaseHelper.instance.importDatabaseWithProgress(
+        widget.file.path,
+        onProgress: (progress, copied, total) {
+          if (mounted) {
+            setState(() {
+              _progress = progress;
+              _copiedBytes = copied;
+              _totalBytes = total;
+            });
+          }
+        },
+      );
+      if (mounted) {
+        widget.onFinished();
+      }
+    } catch (e) {
+      if (mounted) {
+        widget.onError(e.toString());
+      }
+    }
+  }
+
+  String _formatFileSize(int length) {
+    if (length > 1024 * 1024 * 1024) {
+      return '${(length / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+    } else {
+      return '${(length / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (_progress * 100).toInt();
+
+    return PopScope(
+      canPop: false,
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // أيقونة الحوار
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(AppIcons.database, color: AppColors.primary, size: 36),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'جاري استيراد قاعدة البيانات',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'يتم النقل المباشر من التنزيلات دون استهلاك كاش',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // النسبة المئوية
+                Text(
+                  '$percent%',
+                  textDirection: TextDirection.ltr,
+                  style: const TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // شريط التقدم الفعلي
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: _progress,
+                    minHeight: 12,
+                    backgroundColor: AppColors.cardBorder,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // حجم البيانات المنسوخة
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatFileSize(_copiedBytes),
+                      textDirection: TextDirection.ltr,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    ),
+                    Text(
+                      _formatFileSize(_totalBytes),
+                      textDirection: TextDirection.ltr,
+                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // تنبيه
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.scaffoldBackground,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.lock_clock_rounded, size: 16, color: AppColors.textSecondary),
+                      SizedBox(width: 6),
+                      Text(
+                        'يرجى عدم إغلاق التطبيق حتى تكتمل العملية',
+                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

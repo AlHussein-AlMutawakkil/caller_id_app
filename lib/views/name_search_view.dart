@@ -79,6 +79,7 @@ class _NameSearchViewState extends State<NameSearchView> {
                 const SizedBox(width: 6),
                 Text(
                   phone,
+                  textDirection: TextDirection.ltr,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -166,11 +167,6 @@ class _NameSearchViewState extends State<NameSearchView> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Column(
               children: [
-                // const Text(
-                //   "البحث بالإسم",
-                //   style: TextStyle(fontSize: 24, color: AppColors.primary, fontWeight: FontWeight.w400),
-                // ),
-                // const SizedBox(height: 10),
                 AppDropdown<String>(
                   value: _selectedCompany,
                   hintText: "إختر شركة الإتصالات",
@@ -193,10 +189,7 @@ class _NameSearchViewState extends State<NameSearchView> {
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none),
-
                     hintText: "أدخل الاسم هنا",
-                    // focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primary)),
-                    // enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
                   ),
                 ),
                 const SizedBox(height: 20),

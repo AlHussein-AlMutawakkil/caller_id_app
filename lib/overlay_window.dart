@@ -156,6 +156,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                 Expanded(
                   child: Text(
                     _phone.isEmpty ? "جاري البحث..." : _phone,
+                    textDirection: _phone.isEmpty ? TextDirection.rtl : TextDirection.ltr,
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -247,6 +248,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                   // عرض الرقم فقط كما طلب المستخدم بدقة
                   Text(
                     _phone.isEmpty ? "كاشف الأرقام" : _phone,
+                    textDirection: _phone.isEmpty ? TextDirection.rtl : TextDirection.ltr,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -401,6 +403,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                     const SizedBox(width: 4),
                     Text(
                       _phone,
+                      textDirection: TextDirection.ltr,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -524,6 +527,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                         const SizedBox(width: 4),
                         Text(
                           _phone,
+                          textDirection: TextDirection.ltr,
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -560,4 +564,4 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
       },
     );
   }
-}
+}

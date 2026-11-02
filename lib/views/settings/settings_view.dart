@@ -29,7 +29,7 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Future<void> _updateRecords() async {
-    final count = await DatabaseHelper.instance.getTotalRecordsCount();
+    final count = await DatabaseHelper.instance.getTotalRecordsCount(forceRefresh: true);
     if (mounted) {
       setState(() {
         _totalRecords = count;
@@ -157,13 +157,36 @@ class _SettingsViewState extends State<SettingsView> {
                 SettingsTile(
                   leading: const Icon(AppIcons.database, color: AppColors.textPrimary, size: 22),
                   title: 'قاعدة البيانات',
-                  trailing: Text(
-                    _totalRecords > 0 ? '${_formatNumber(_totalRecords)} رقم' : 'غير متوفرة',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  trailing: _totalRecords > 0
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _formatNumber(_totalRecords),
+                              textDirection: TextDirection.ltr,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'رقم',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        )
+                      : const Text(
+                          'غير متوفرة',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                   onTap: () async {
                     await Navigator.push(
                       context,

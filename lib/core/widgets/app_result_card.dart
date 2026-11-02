@@ -141,6 +141,7 @@ class AppResultTile extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           phone,
+                          textDirection: TextDirection.ltr,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
