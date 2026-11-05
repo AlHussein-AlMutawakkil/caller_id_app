@@ -147,7 +147,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: AppColors.primary.withOpacity(0.08),
-                  child: const Icon(
+                  child: Icon(
                     Icons.phone_in_talk_rounded,
                     color: AppColors.primary,
                     size: 20,
@@ -161,7 +161,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                     _phone.isEmpty ? "جاري البحث..." : _phone,
                     textDirection:
                         _phone.isEmpty ? TextDirection.rtl : TextDirection.ltr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -181,7 +181,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.cardBorder, width: 1),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.keyboard_arrow_down_rounded,
                     color: AppColors.primary,
                     size: 20,
@@ -191,7 +191,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
 
                 // زر إغلاق النافذة العائمة
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.close_rounded,
                     color: AppColors.textSecondary,
                     size: 20,
@@ -257,7 +257,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                     _phone.isEmpty ? "كاشف الأرقام" : _phone,
                     textDirection:
                         _phone.isEmpty ? TextDirection.rtl : TextDirection.ltr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -277,7 +277,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                       child: Center(
                         child: Text(
                           '${_namesList.length}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
@@ -290,7 +290,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                   const Spacer(),
                   // زر تصغير النافذة
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.keyboard_arrow_up_rounded,
                       color: AppColors.textSecondary,
                       size: 24,
@@ -301,7 +301,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                   ),
                   // زر إغلاق النافذة
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close_rounded,
                       color: AppColors.textSecondary,
                       size: 22,
@@ -314,11 +314,11 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                 ],
               ),
             ),
-            const Divider(height: 1, thickness: 0.8, color: AppColors.divider),
+            Divider(height: 1, thickness: 0.8, color: AppColors.divider),
 
             // محتوى البطاقة: حالة التحميل أو النتائج أو رقم غير مسجل
             if (_phone.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 28),
                 child: Center(
                   child: Column(
@@ -379,7 +379,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
           CircleAvatar(
             radius: 20,
             backgroundColor: AppColors.disabled.withOpacity(0.18),
-            child: const Icon(
+            child: Icon(
               Icons.person_off_rounded,
               color: AppColors.textSecondary,
               size: 22,
@@ -391,7 +391,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   "رقم غير مسجل",
                   style: TextStyle(
                     fontSize: 15,
@@ -452,7 +452,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
       shrinkWrap: true,
       physics: const BouncingScrollPhysics(),
       itemCount: _namesList.length,
-      separatorBuilder: (_, __) => const Divider(
+      separatorBuilder: (_, __) => Divider(
         height: 1,
         thickness: 0.8,
         color: AppColors.divider,
@@ -470,7 +470,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                 child: CircleAvatar(
                   radius: 20,
                   backgroundColor: AppColors.primary.withOpacity(0.07),
-                  child: const Icon(
+                  child: Icon(
                     Icons.person_rounded,
                     color: AppColors.primary,
                     size: 22,
@@ -491,7 +491,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                         Expanded(
                           child: Text(
                             name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
@@ -515,7 +515,7 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
                             child: Center(
                               child: Text(
                                 '${_namesList.length}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primary,

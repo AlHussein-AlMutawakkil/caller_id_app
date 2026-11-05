@@ -39,7 +39,7 @@ class AppResultListContainer extends StatelessWidget {
           children: [
             for (int i = 0; i < children.length; i++) ...[
               if (i > 0)
-                const Divider(
+                Divider(
                   height: 1,
                   thickness: 0.8,
                   color: AppColors.divider,
@@ -109,7 +109,7 @@ class AppResultTile extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 20,
                   backgroundColor: AppColors.primary.withOpacity(0.07),
-                  child: const Icon(
+                  child: Icon(
                     Icons.person_rounded,
                     color: AppColors.primary,
                     size: 22,
@@ -125,7 +125,7 @@ class AppResultTile extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
@@ -163,7 +163,7 @@ class AppResultTile extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.copy_rounded,
                       size: 19,
                       color: AppColors.textSecondary,
@@ -178,7 +178,7 @@ class AppResultTile extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.keyboard_arrow_down_rounded,
                       color: AppColors.textSecondary,
                       size: 24,

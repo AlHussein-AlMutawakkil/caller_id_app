@@ -17,10 +17,10 @@ class LanguageView extends StatelessWidget {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
+            icon: Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'اللغة',
             style: TextStyle(
               fontSize: 20,
@@ -38,7 +38,7 @@ class LanguageView extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Row(
-                    children: const [
+                    children: [
                       Expanded(
                         child: Text(
                           'Arabic (العربية)',

@@ -75,7 +75,7 @@ class _LicenseViewState extends State<LicenseView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('إلغاء', style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo')),
+              child: Text('إلغاء', style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -137,10 +137,10 @@ class _LicenseViewState extends State<LicenseView> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textPrimary, size: 19),
+            icon: Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textPrimary, size: 19),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'الترخيص',
             style: TextStyle(
               fontSize: 20,
@@ -152,7 +152,7 @@ class _LicenseViewState extends State<LicenseView> {
           centerTitle: false,
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? Center(child: CircularProgressIndicator(color: AppColors.primary))
             : Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
@@ -194,7 +194,7 @@ class _LicenseViewState extends State<LicenseView> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
+                          Text(
                             'النسخة مفعلة',
                             style: TextStyle(
                               fontSize: 18,
@@ -208,7 +208,7 @@ class _LicenseViewState extends State<LicenseView> {
                             (_status?.isLifetime ?? false)
                                 ? 'تفعيل دائم (أبدي)'
                                 : 'صالح حتى: ${_status?.expiryDate?.toLocal().toString().split(' ')[0] ?? '-'} (${_status?.remainingDays ?? 0} يوم متبقي)',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textSecondary,
@@ -232,7 +232,7 @@ class _LicenseViewState extends State<LicenseView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'كود الجهاز:',
                             style: TextStyle(
                               fontSize: 14,
@@ -247,7 +247,7 @@ class _LicenseViewState extends State<LicenseView> {
                               Expanded(
                                 child: Text(
                                   _requestCode ?? '—',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.5,
@@ -257,7 +257,7 @@ class _LicenseViewState extends State<LicenseView> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.copy_rounded, color: AppColors.textSecondary, size: 20),
+                                icon: Icon(Icons.copy_rounded, color: AppColors.textSecondary, size: 20),
                                 tooltip: 'نسخ',
                                 onPressed: _copyCode,
                               ),
@@ -273,4 +273,3 @@ class _LicenseViewState extends State<LicenseView> {
     );
   }
 }
-

@@ -89,7 +89,7 @@ class _DatabaseViewState extends State<DatabaseView> {
       onActionButtonPressed: () {
         Navigator.of(context).pop(true);
       },
-      child: const Padding(
+      child: Padding(
         padding: EdgeInsets.symmetric(vertical: 14),
         child: Text(
           'هل أنت متأكد من رغبتك في حذف قاعدة البيانات؟ سيتم مسح جميع جهات الاتصال والأرقام المحلية من الجهاز.',
@@ -108,7 +108,7 @@ class _DatabaseViewState extends State<DatabaseView> {
       await _loadDatabaseInfo();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('تم حذف قاعدة البيانات بنجاح', textAlign: TextAlign.center),
             backgroundColor: AppColors.primary,
           ),
@@ -171,7 +171,7 @@ class _DatabaseViewState extends State<DatabaseView> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: foundFiles.length,
-        separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.divider),
+        separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.divider),
         itemBuilder: (context, index) {
           final file = foundFiles[index];
           final length = file.lengthSync();
@@ -185,14 +185,14 @@ class _DatabaseViewState extends State<DatabaseView> {
                 color: AppColors.scaffoldBackground,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(AppIcons.database, color: AppColors.primary, size: 22),
+              child: Icon(AppIcons.database, color: AppColors.primary, size: 22),
             ),
             title: Text(
               p.basename(file.path),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-            subtitle: Text('الحجم: $sizeStr', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            trailing: const Icon(AppIcons.chevronRight, size: 18, color: AppColors.textSecondary),
+            subtitle: Text('الحجم: $sizeStr', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            trailing: Icon(AppIcons.chevronRight, size: 18, color: AppColors.textSecondary),
             onTap: () {
               Navigator.of(context).pop();
               _confirmAndImport(file);
@@ -241,7 +241,7 @@ class _DatabaseViewState extends State<DatabaseView> {
                 children: [
                   Row(
                     children: [
-                      const Icon(AppIcons.database, color: AppColors.primary, size: 22),
+                      Icon(AppIcons.database, color: AppColors.primary, size: 22),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -255,14 +255,14 @@ class _DatabaseViewState extends State<DatabaseView> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.storage_outlined, color: AppColors.textSecondary, size: 18),
+                      Icon(Icons.storage_outlined, color: AppColors.textSecondary, size: 18),
                       const SizedBox(width: 8),
-                      Text('الحجم: $sizeStr', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      Text('الحجم: $sizeStr', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Row(
-                    children: const [
+                    children: [
                       Icon(Icons.folder_outlined, color: AppColors.textSecondary, size: 18),
                       SizedBox(width: 8),
                       Text('المصدر: مجلد التنزيلات (مباشر بدون كاش)', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
@@ -272,7 +272,7 @@ class _DatabaseViewState extends State<DatabaseView> {
               ),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'تنبيه: سيتم استبدال قاعدة البيانات الحالية بهذه القاعدة ونقلها مباشرة دون استهلاك مساحة الكاش.',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -345,10 +345,10 @@ class _DatabaseViewState extends State<DatabaseView> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
+            icon: Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'قاعدة البيانات',
             style: TextStyle(
               fontSize: 20,
@@ -367,7 +367,7 @@ class _DatabaseViewState extends State<DatabaseView> {
                   SettingsCard(
                     children: [
                       SettingsTile(
-                        leading: const Icon(AppIcons.database, color: AppColors.textPrimary, size: 22),
+                        leading: Icon(AppIcons.database, color: AppColors.textPrimary, size: 22),
                         title: 'حالة القاعدة',
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -391,7 +391,7 @@ class _DatabaseViewState extends State<DatabaseView> {
                         showDivider: true,
                       ),
                       SettingsTile(
-                        leading: const Icon(Icons.pin_outlined, color: AppColors.textPrimary, size: 22),
+                        leading: Icon(Icons.pin_outlined, color: AppColors.textPrimary, size: 22),
                         title: 'إجمالي الأرقام المسجلة',
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -399,14 +399,14 @@ class _DatabaseViewState extends State<DatabaseView> {
                             Text(
                               _formatNumber(_totalRecords),
                               textDirection: TextDirection.ltr,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Text(
+                            Text(
                               'رقم',
                               style: TextStyle(
                                 fontSize: 13,
@@ -418,11 +418,11 @@ class _DatabaseViewState extends State<DatabaseView> {
                         showDivider: true,
                       ),
                       SettingsTile(
-                        leading: const Icon(Icons.storage_outlined, color: AppColors.textPrimary, size: 22),
+                        leading: Icon(Icons.storage_outlined, color: AppColors.textPrimary, size: 22),
                         title: 'حجم ملف القاعدة',
                         trailing: Text(
                           _fileSize,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
                           ),
@@ -430,7 +430,7 @@ class _DatabaseViewState extends State<DatabaseView> {
                         showDivider: true,
                       ),
                       SettingsTile(
-                        leading: const Icon(Icons.folder_outlined, color: AppColors.textPrimary, size: 22),
+                        leading: Icon(Icons.folder_outlined, color: AppColors.textPrimary, size: 22),
                         title: 'مسار التخزين',
                         subtitle: _dbPath.isEmpty ? 'غير محدد' : _dbPath,
                       ),
@@ -443,15 +443,15 @@ class _DatabaseViewState extends State<DatabaseView> {
                   SettingsCard(
                     children: [
                       SettingsTile(
-                        leading: const Icon(AppIcons.importDb, color: AppColors.textPrimary, size: 22),
+                        leading: Icon(AppIcons.importDb, color: AppColors.textPrimary, size: 22),
                         title: 'استيراد قاعدة بيانات',
                         subtitle: 'البحث عن ملفات (.db) في مجلد التنزيلات واستيرادها',
-                        trailing: const Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
+                        trailing: Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
                         showDivider: true,
                         onTap: _scanAndImportDatabaseFromDownloads,
                       ),
                       SettingsTile(
-                        leading: const Icon(AppIcons.refresh, color: AppColors.textPrimary, size: 22),
+                        leading: Icon(AppIcons.refresh, color: AppColors.textPrimary, size: 22),
                         title: 'تحديث وقراءة العداد',
                         subtitle: 'إعادة فحص وتحديث عدد السجلات',
                         showDivider: true,
@@ -577,16 +577,16 @@ class _ImportProgressDialogState extends State<_ImportProgressDialog> {
                     color: AppColors.primary.withOpacity(0.08),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(AppIcons.database, color: AppColors.primary, size: 36),
+                  child: Icon(AppIcons.database, color: AppColors.primary, size: 36),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'جاري استيراد قاعدة البيانات',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'يتم النقل المباشر من التنزيلات دون استهلاك كاش',
                   style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   textAlign: TextAlign.center,
@@ -597,7 +597,7 @@ class _ImportProgressDialogState extends State<_ImportProgressDialog> {
                 Text(
                   '$percent%',
                   textDirection: TextDirection.ltr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 34,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
@@ -624,12 +624,12 @@ class _ImportProgressDialogState extends State<_ImportProgressDialog> {
                     Text(
                       _formatFileSize(_copiedBytes),
                       textDirection: TextDirection.ltr,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
                     Text(
                       _formatFileSize(_totalBytes),
                       textDirection: TextDirection.ltr,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -644,7 +644,7 @@ class _ImportProgressDialogState extends State<_ImportProgressDialog> {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(Icons.lock_clock_rounded, size: 16, color: AppColors.textSecondary),
                       SizedBox(width: 6),
                       Text(

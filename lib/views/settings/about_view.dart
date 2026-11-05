@@ -17,10 +17,10 @@ class AboutView extends StatelessWidget {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
+            icon: Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'حول التطبيق',
             style: TextStyle(
               fontSize: 20,
@@ -73,7 +73,7 @@ class AboutView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'كاشف أرقام ذكي محلي للتعرف على هوية المتصلين والبحث الفوري بدون الحاجة للإنترنت وبأعلى خصوصية.',
                   textAlign: TextAlign.start,
                   style: TextStyle(
@@ -87,7 +87,7 @@ class AboutView extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [
+                    children: [
                       Text(
                         'إصدار التطبيق',
                         style: TextStyle(
@@ -120,7 +120,7 @@ class AboutView extends StatelessWidget {
                   title: 'شروط الاستخدام',
                   onTap: () {},
                 ),
-                const Divider(
+                Divider(
                   height: 1,
                   thickness: 1,
                   color: AppColors.divider,
@@ -132,7 +132,7 @@ class AboutView extends StatelessWidget {
                   title: 'سياسة الاستخدام',
                   onTap: () {},
                 ),
-                const Divider(
+                Divider(
                   height: 1,
                   thickness: 1,
                   color: AppColors.divider,
@@ -166,14 +166,14 @@ class AboutView extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary,
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               AppIcons.chevronRight,
               size: 20,
               color: AppColors.textSecondary,

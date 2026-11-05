@@ -60,10 +60,10 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
                   filled: true,
                   fillColor: AppColors.Secondary,
                   prefixIcon:
-                      const Icon(Icons.dialpad, color: AppColors.primary),
+                      Icon(Icons.dialpad, color: AppColors.primary),
                   suffixIcon: _controller.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear,
+                          icon: Icon(Icons.clear,
                               color: AppColors.textSecondary),
                           onPressed: () {
                             setState(() {
@@ -145,7 +145,7 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
 
               if (state is SearchNumberSuccess) {
                 if (state.results.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text(
                       'لا توجد نتائج مطابقة',
                       style: TextStyle(
@@ -175,7 +175,7 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
                 );
               }
 
-              return const Center(
+              return Center(
                 child: Text(
                   'أدخل رقم الهاتف واضغط على بحث بالرقم',
                   style: TextStyle(

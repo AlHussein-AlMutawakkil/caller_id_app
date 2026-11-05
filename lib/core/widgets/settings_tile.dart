@@ -56,7 +56,7 @@ class SettingsTile extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           subtitle!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
@@ -71,7 +71,7 @@ class SettingsTile extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          const Divider(
+          Divider(
             height: 1,
             thickness: 1,
             color: AppColors.divider,

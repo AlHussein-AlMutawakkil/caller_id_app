@@ -83,7 +83,7 @@ class AppModalDialog extends StatelessWidget {
               children: [
                 if (showCloseButton)
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: AppColors.textPrimary, size: 24),
+                    icon: Icon(Icons.close_rounded, color: AppColors.textPrimary, size: 24),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     onPressed: onClose ?? () => Navigator.of(context).pop(),
@@ -95,7 +95,7 @@ class AppModalDialog extends StatelessWidget {
                     child: Text(
                       title!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,

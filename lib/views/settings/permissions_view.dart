@@ -119,11 +119,11 @@ class _PermissionsViewState extends State<PermissionsView> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(AppIcons.back,
+            icon: Icon(AppIcons.back,
                 color: AppColors.textPrimary, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'الأذونات',
             style: TextStyle(
               fontSize: 20,
@@ -164,7 +164,7 @@ class _PermissionsViewState extends State<PermissionsView> {
                                   Expanded(
                                     child: Text(
                                       item.title,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.textPrimary,
@@ -186,7 +186,7 @@ class _PermissionsViewState extends State<PermissionsView> {
                             ),
                           ),
                           if (!isLast)
-                            const Divider(
+                            Divider(
                               height: 1,
                               thickness: 1,
                               color: AppColors.divider,

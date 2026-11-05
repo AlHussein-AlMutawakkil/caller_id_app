@@ -105,7 +105,7 @@ class AppDropdown<T> extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Icon(
+            Icon(
               Icons.keyboard_arrow_down_rounded,
               color: AppColors.textSecondary,
               size: 24,
@@ -162,7 +162,7 @@ class _AppDropdownMenuDialog<T> extends StatelessWidget {
             shrinkWrap: true,
             physics: const BouncingScrollPhysics(),
             itemCount: items.length,
-            separatorBuilder: (context, index) => const Divider(
+            separatorBuilder: (context, index) => Divider(
               height: 1,
               thickness: 0.8,
               color: AppColors.divider,
@@ -183,7 +183,7 @@ class _AppDropdownMenuDialog<T> extends StatelessWidget {
                     children: [
                       // أيقونة الاختيار الدائرية السوداء (مطابقة للصورة 1)
                       if (isCurrentSelected)
-                        const Icon(
+                        Icon(
                           Icons.check_circle_rounded,
                           color: AppColors.primary,
                           size: 22,

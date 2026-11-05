@@ -12,7 +12,7 @@ class SmartSearchIndicator extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: AppColors.primary),
+          CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -22,7 +22,7 @@ class SmartSearchIndicator extends StatelessWidget {
             ),
             child: Text(
               statusText,
-              style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 15),
+              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 15),
               textAlign: TextAlign.center,
             ),
           ),

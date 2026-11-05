@@ -78,11 +78,11 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
               fillColor: AppColors.scaffoldBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.cardBorder),
+                borderSide: BorderSide(color: AppColors.cardBorder),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.cardBorder),
+                borderSide: BorderSide(color: AppColors.cardBorder),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
@@ -98,11 +98,11 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
               fillColor: AppColors.scaffoldBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.cardBorder),
+                borderSide: BorderSide(color: AppColors.cardBorder),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.cardBorder),
+                borderSide: BorderSide(color: AppColors.cardBorder),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
@@ -127,7 +127,7 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
         child: Text(
           'هل أنت متأكد من حذف فلتر "$name"؟ لن تتمكن من التصفية بهذا الرقم في البحث حتى تعيد إضافته.',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             height: 1.5,
             color: AppColors.textPrimary,
@@ -153,10 +153,10 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
+            icon: Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'شركات الاتصالات',
             style: TextStyle(
               fontSize: 20,
@@ -167,7 +167,7 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
           centerTitle: false,
           actions: [
             IconButton(
-              icon: const Icon(AppIcons.add, color: AppColors.textPrimary, size: 26),
+              icon: Icon(AppIcons.add, color: AppColors.textPrimary, size: 26),
               tooltip: 'إضافة شركة جديدة',
               onPressed: () => _showAddOrEditDialog(),
             ),
@@ -199,7 +199,7 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
                                     children: [
                                       Text(
                                         company.name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.textPrimary,
@@ -208,7 +208,7 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
                                       const SizedBox(height: 3),
                                       Text(
                                         'مقدمة الرقم: ${company.prefix}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13,
                                           color: AppColors.textSecondary,
                                         ),
@@ -218,7 +218,7 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
                                 ),
                                 // زر الثلاث نقاط مع القائمة المنسدلة للتعديل والحذف
                                 PopupMenuButton<String>(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     AppIcons.more,
                                     color: AppColors.textSecondary,
                                     size: 20,
@@ -239,7 +239,7 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
                                       child: Directionality(
                                         textDirection: TextDirection.rtl,
                                         child: Row(
-                                          children: const [
+                                          children: [
                                             Icon(AppIcons.edit, size: 18, color: AppColors.textPrimary),
                                             SizedBox(width: 10),
                                             Text('تعديل', style: TextStyle(fontSize: 14)),
@@ -266,7 +266,7 @@ class _TelecomCompaniesViewState extends State<TelecomCompaniesView> {
                             ),
                           ),
                           if (!isLast)
-                            const Divider(
+                            Divider(
                               height: 1,
                               thickness: 1,
                               color: AppColors.divider,

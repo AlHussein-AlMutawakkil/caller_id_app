@@ -74,13 +74,13 @@ class _NameSearchViewState extends State<NameSearchView> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.phone_android_rounded,
+                Icon(Icons.phone_android_rounded,
                     size: 16, color: AppColors.primary),
                 const SizedBox(width: 6),
                 Text(
                   phone,
                   textDirection: TextDirection.ltr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
@@ -90,13 +90,13 @@ class _NameSearchViewState extends State<NameSearchView> {
             ),
           ),
           const SizedBox(height: 14),
-          const Divider(height: 1, color: AppColors.divider),
+          Divider(height: 1, color: AppColors.divider),
           // قائمة الأسماء المرتبطة
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: namesList.length,
-            separatorBuilder: (_, __) => const Divider(
+            separatorBuilder: (_, __) => Divider(
               height: 1,
               color: AppColors.divider,
               indent: 10,
@@ -122,7 +122,7 @@ class _NameSearchViewState extends State<NameSearchView> {
                         child: Center(
                           child: Text(
                             '${index + 1}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textSecondary,
@@ -135,7 +135,7 @@ class _NameSearchViewState extends State<NameSearchView> {
                     Expanded(
                       child: Text(
                         namesList[index],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -190,7 +190,7 @@ class _NameSearchViewState extends State<NameSearchView> {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: AppColors.Secondary,
-                    prefixIcon: const Icon(Icons.person_search,
+                    prefixIcon: Icon(Icons.person_search,
                         color: AppColors.primary),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -229,7 +229,7 @@ class _NameSearchViewState extends State<NameSearchView> {
           ),
         ),
         if (_isLoading)
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(20),
               child: Center(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/settings_card.dart';
@@ -56,10 +57,10 @@ class _SettingsViewState extends State<SettingsView> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
+            icon: Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'الإعدادات',
             style: TextStyle(
               fontSize: 22,
@@ -72,63 +73,13 @@ class _SettingsViewState extends State<SettingsView> {
         body: ListView(
           padding: const EdgeInsets.only(top: 8, bottom: 28),
           children: [
-            // 1. بطاقة الملف الشخصي (مطابقة للصورة 3)
-            SettingsCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              children: [
-                Row(
-                  children: [
-                    // الصورة الرمزية في دائرة داكنة
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        AppIcons.profileAvatar,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // الاسم وتعديل الملف الشخصي
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'الحسين علي المتوكل',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'تعديل الملف الشخصي',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            // 2. بطاقة الترخيص
+            // 1. بطاقة الترخيص
             SettingsCard(
               children: [
                 SettingsTile(
-                  leading: const Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 22),
+                  leading: Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 22),
                   title: 'الترخيص',
-                  trailing: const Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
+                  trailing: Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -143,9 +94,9 @@ class _SettingsViewState extends State<SettingsView> {
             SettingsCard(
               children: [
                 SettingsTile(
-                  leading: const Icon(AppIcons.telecom, color: AppColors.textPrimary, size: 22),
+                  leading: Icon(AppIcons.telecom, color: AppColors.textPrimary, size: 22),
                   title: 'شركات الاتصالات',
-                  trailing: const Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
+                  trailing: Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
                   showDivider: true,
                   onTap: () {
                     Navigator.push(
@@ -155,7 +106,7 @@ class _SettingsViewState extends State<SettingsView> {
                   },
                 ),
                 SettingsTile(
-                  leading: const Icon(AppIcons.database, color: AppColors.textPrimary, size: 22),
+                  leading: Icon(AppIcons.database, color: AppColors.textPrimary, size: 22),
                   title: 'قاعدة البيانات',
                   trailing: _totalRecords > 0
                       ? Row(
@@ -164,14 +115,14 @@ class _SettingsViewState extends State<SettingsView> {
                             Text(
                               _formatNumber(_totalRecords),
                               textDirection: TextDirection.ltr,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Text(
+                            Text(
                               'رقم',
                               style: TextStyle(
                                 fontSize: 13,
@@ -180,7 +131,7 @@ class _SettingsViewState extends State<SettingsView> {
                             ),
                           ],
                         )
-                      : const Text(
+                      : Text(
                           'غير متوفرة',
                           style: TextStyle(
                             fontSize: 13,
@@ -202,9 +153,9 @@ class _SettingsViewState extends State<SettingsView> {
             SettingsCard(
               children: [
                 SettingsTile(
-                  leading: const Icon(AppIcons.appearance, color: AppColors.textPrimary, size: 22),
+                  leading: Icon(AppIcons.appearance, color: AppColors.textPrimary, size: 22),
                   title: 'المظهر',
-                  trailing: const Text(
+                  trailing: Text(
                     'فاتح',
                     style: TextStyle(
                       fontSize: 14,
@@ -220,9 +171,9 @@ class _SettingsViewState extends State<SettingsView> {
                   },
                 ),
                 SettingsTile(
-                  leading: const Icon(AppIcons.language, color: AppColors.textPrimary, size: 22),
+                  leading: Icon(AppIcons.language, color: AppColors.textPrimary, size: 22),
                   title: 'لغة التطبيق',
-                  trailing: const Text(
+                  trailing: Text(
                     'العربية (Arabic)',
                     style: TextStyle(
                       fontSize: 14,
@@ -243,7 +194,7 @@ class _SettingsViewState extends State<SettingsView> {
             SettingsCard(
               children: [
                 SettingsTile(
-                  leading: const Icon(AppIcons.permissions, color: AppColors.textPrimary, size: 22),
+                  leading: Icon(AppIcons.permissions, color: AppColors.textPrimary, size: 22),
                   title: 'إدارة الأذونات',
                   showDivider: true,
                   onTap: () {
@@ -254,7 +205,7 @@ class _SettingsViewState extends State<SettingsView> {
                   },
                 ),
                 SettingsTile(
-                  leading: const Icon(AppIcons.about, color: AppColors.textPrimary, size: 22),
+                  leading: Icon(AppIcons.about, color: AppColors.textPrimary, size: 22),
                   title: 'حول التطبيق',
                   onTap: () {
                     Navigator.push(
@@ -266,11 +217,11 @@ class _SettingsViewState extends State<SettingsView> {
               ],
             ),
 
-            // 6. بطاقة تسجيل الخروج (مطابقة للصورة 3 باللون الأحمر)
+            // 5. بطاقة الخروج من التطبيق
             SettingsCard(
               children: [
                 SettingsTile(
-                  title: 'تسجيل الخروج',
+                  title: 'الخروج من التطبيق',
                   textColor: AppColors.error,
                   trailing: const Icon(
                     AppIcons.logout,
@@ -280,16 +231,16 @@ class _SettingsViewState extends State<SettingsView> {
                   onTap: () {
                     AppModalDialog.show(
                       context: context,
-                      title: 'تسجيل الخروج',
-                      actionButtonText: 'تأكيد تسجيل الخروج',
+                      title: 'الخروج من التطبيق',
+                      actionButtonText: 'تأكيد الخروج',
                       actionButtonColor: AppColors.error,
                       onActionButtonPressed: () {
-                        Navigator.of(context).pop();
+                        SystemNavigator.pop();
                       },
-                      child: const Padding(
+                      child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 14),
                         child: Text(
-                          'هل أنت متأكد من رغبتك في تسجيل الخروج من الحساب؟',
+                          'هل أنت متأكد من رغبتك في إغلاق والخروج من التطبيق؟',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 15,

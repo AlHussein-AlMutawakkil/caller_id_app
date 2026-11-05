@@ -11,10 +11,12 @@ import 'overlay_window.dart';
 import 'core/theme/app_colors.dart';
 import 'core/services/telecom_companies_service.dart';
 import 'core/services/activation_service.dart';
+import 'core/services/theme_service.dart';
 import 'views/activation/activation_gate_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ThemeService.instance.init();
   await initializeBackgroundService();
   await TelecomCompaniesService.instance.getCompanies();
   runApp(const MyApp());
@@ -163,30 +165,56 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'دليل اليمن',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: AppColors.primary,
-        fontFamily: 'Cairo',
-      ),
-      home: _isCheckingActivation
-          ? const Scaffold(
-              backgroundColor: AppColors.scaffoldBackground,
-              body: Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
-            )
-          : _isActivated
-              ? const HomeScreen()
-              : ActivationGateView(
-                  onActivated: () {
-                    setState(() {
-                      _isActivated = true;
-                    });
-                    _requestRequiredPermissions();
-                  },
-                ),
+    return ListenableBuilder(
+      listenable: ThemeService.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'دليل اليمن',
+          debugShowCheckedModeBanner: false,
+          themeMode: ThemeService.instance.themeMode == 2
+              ? ThemeMode.dark
+              : ThemeService.instance.themeMode == 1
+                  ? ThemeMode.light
+                  : ThemeMode.system,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            primaryColor: AppColors.primary,
+            scaffoldBackgroundColor: AppColors.scaffoldBackground,
+            fontFamily: 'Cairo',
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              surface: AppColors.cardBackground,
+            ),
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            primaryColor: AppColors.primary,
+            scaffoldBackgroundColor: AppColors.scaffoldBackground,
+            fontFamily: 'Cairo',
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.primary,
+              surface: AppColors.cardBackground,
+            ),
+          ),
+          home: _isCheckingActivation
+              ? Scaffold(
+                  backgroundColor: AppColors.scaffoldBackground,
+                  body: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+                )
+              : _isActivated
+                  ? const HomeScreen()
+                  : ActivationGateView(
+                      onActivated: () {
+                        setState(() {
+                          _isActivated = true;
+                        });
+                        _requestRequiredPermissions();
+                      },
+                    ),
+        );
+      },
     );
   }
 }

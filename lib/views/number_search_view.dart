@@ -68,7 +68,7 @@ class _NumberSearchViewState extends State<NumberSearchView> {
                   filled: true,
                   fillColor: AppColors.Secondary,
                   prefixIcon:
-                      const Icon(Icons.dialpad, color: AppColors.primary),
+                      Icon(Icons.dialpad, color: AppColors.primary),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none),
@@ -108,7 +108,7 @@ class _NumberSearchViewState extends State<NumberSearchView> {
 
   Widget _buildResultsArea() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

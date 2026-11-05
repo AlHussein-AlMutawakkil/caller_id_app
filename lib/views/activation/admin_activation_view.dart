@@ -125,10 +125,10 @@ class _AdminActivationViewState extends State<AdminActivationView> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textPrimary, size: 19),
+            icon: Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textPrimary, size: 19),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'توليد كود التفعيل',
             style: TextStyle(
               fontSize: 20,
@@ -155,7 +155,7 @@ class _AdminActivationViewState extends State<AdminActivationView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'كود الجهاز:',
                       style: TextStyle(
                         fontSize: 14,
@@ -193,10 +193,10 @@ class _AdminActivationViewState extends State<AdminActivationView> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                         ),
                         suffixIcon: IconButton(
-                          icon: const Icon(Icons.paste_rounded, color: AppColors.primary, size: 20),
+                          icon: Icon(Icons.paste_rounded, color: AppColors.primary, size: 20),
                           tooltip: 'لصق',
                           onPressed: _pasteRequestCode,
                         ),
@@ -204,7 +204,7 @@ class _AdminActivationViewState extends State<AdminActivationView> {
                     ),
                     const SizedBox(height: 16),
 
-                    const Text(
+                    Text(
                       'مدة التفعيل:',
                       style: TextStyle(
                         fontSize: 14,
@@ -290,7 +290,7 @@ class _AdminActivationViewState extends State<AdminActivationView> {
                         child: SelectableText(
                           _generatedCode!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 2,
@@ -302,7 +302,7 @@ class _AdminActivationViewState extends State<AdminActivationView> {
                       const SizedBox(height: 6),
                       Text(
                         _selectedDuration.labelAr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
                           fontFamily: 'Cairo',
@@ -318,7 +318,7 @@ class _AdminActivationViewState extends State<AdminActivationView> {
                               label: const Text('نسخ', style: TextStyle(fontFamily: 'Cairo')),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.primary,
-                                side: const BorderSide(color: AppColors.primary),
+                                side: BorderSide(color: AppColors.primary),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                               ),

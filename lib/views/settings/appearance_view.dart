@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/settings_card.dart';
+import '../../core/services/theme_service.dart';
 
 class AppearanceView extends StatefulWidget {
   const AppearanceView({super.key});
@@ -11,14 +12,19 @@ class AppearanceView extends StatefulWidget {
 }
 
 class _AppearanceViewState extends State<AppearanceView> {
-  // الوضع الافتراضي: فاتح
-  int _selectedThemeIndex = 1;
+  late int _selectedThemeIndex;
 
   final List<String> _themes = [
     'النظام',
     'فاتح',
     'مظلم',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedThemeIndex = ThemeService.instance.themeMode;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +37,10 @@ class _AppearanceViewState extends State<AppearanceView> {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: const Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
+            icon: Icon(AppIcons.back, color: AppColors.textPrimary, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'سمة الألوان',
             style: TextStyle(
               fontSize: 20,
@@ -60,6 +66,7 @@ class _AppearanceViewState extends State<AppearanceView> {
                         setState(() {
                           _selectedThemeIndex = index;
                         });
+                        ThemeService.instance.setThemeMode(index);
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -68,7 +75,7 @@ class _AppearanceViewState extends State<AppearanceView> {
                             Expanded(
                               child: Text(
                                 _themes[index],
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.textPrimary,
@@ -76,7 +83,7 @@ class _AppearanceViewState extends State<AppearanceView> {
                               ),
                             ),
                             if (isSelected)
-                              const Icon(
+                              Icon(
                                 AppIcons.checked,
                                 color: AppColors.textPrimary,
                                 size: 22,
@@ -86,7 +93,7 @@ class _AppearanceViewState extends State<AppearanceView> {
                       ),
                     ),
                     if (!isLast)
-                      const Divider(
+                      Divider(
                         height: 1,
                         thickness: 1,
                         color: AppColors.divider,

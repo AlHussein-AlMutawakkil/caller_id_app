@@ -200,7 +200,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('إلغاء', style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo')),
+              child: Text('إلغاء', style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Cairo')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -241,7 +241,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
         backgroundColor: AppColors.scaffoldBackground,
         body: SafeArea(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              ? Center(child: CircularProgressIndicator(color: AppColors.primary))
               : Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -277,7 +277,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              const Text(
+                              Text(
                                 'تفعيل كاشف الأرقام',
                                 style: TextStyle(
                                   fontSize: 20,
@@ -287,7 +287,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'أدخل كود التفعيل للمتابعة',
                                 style: TextStyle(
                                   fontSize: 13,
@@ -311,7 +311,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'كود الجهاز:',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -333,7 +333,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
                                 child: SelectableText(
                                   _requestCode ?? '—',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 2,
@@ -391,7 +391,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'كود التفعيل:',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -430,10 +430,10 @@ class _ActivationGateViewState extends State<ActivationGateView> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                                    borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                                   ),
                                   suffixIcon: IconButton(
-                                    icon: const Icon(Icons.paste_rounded, color: AppColors.primary, size: 20),
+                                    icon: Icon(Icons.paste_rounded, color: AppColors.primary, size: 20),
                                     tooltip: 'لصق',
                                     onPressed: _pasteActivationCode,
                                   ),
