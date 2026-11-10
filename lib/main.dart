@@ -96,7 +96,18 @@ void onStart(ServiceInstance service) async {
 
         String displayName = "رقم غير مسجل";
         if (dbResults.isNotEmpty) {
-          displayName = dbResults.first['names'] ?? "رقم غير مسجل";
+          final Set<String> distinctNames = {};
+          for (final row in dbResults) {
+            final raw = row['names']?.toString() ?? '';
+            final parts = raw
+                .split(RegExp(r'[,،|\n]'))
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty);
+            distinctNames.addAll(parts);
+          }
+          if (distinctNames.isNotEmpty) {
+            displayName = distinctNames.join(' ، ');
+          }
         }
 
         lastCallData = {

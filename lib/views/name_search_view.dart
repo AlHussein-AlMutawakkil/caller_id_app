@@ -42,7 +42,12 @@ class _NameSearchViewState extends State<NameSearchView> {
   }
 
   String _extractMatchingName(String allNames, String searchQuery) {
-    List<String> list = allNames.split(',').map((e) => e.trim()).toList();
+    List<String> list = allNames
+        .split(RegExp(r'[,،|\n]'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (list.isEmpty) return allNames;
     String match = list.firstWhere(
       (name) => name.toLowerCase().contains(searchQuery.toLowerCase()),
       orElse: () => list.first,
@@ -50,12 +55,33 @@ class _NameSearchViewState extends State<NameSearchView> {
     return match;
   }
 
-  void _showNamesDialog(BuildContext context, String phone, String allNames) {
-    List<String> namesList = allNames
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
+  Future<void> _showNamesDialog(
+      BuildContext context, String phone, String allNames) async {
+    final Set<String> distinctNames = {};
+
+    void addNamesFromString(String str) {
+      final parts = str
+          .split(RegExp(r'[,،|\n]'))
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty);
+      distinctNames.addAll(parts);
+    }
+
+    addNamesFromString(allNames);
+
+    // استعلام فوري لقاعدة البيانات برقم الهاتف لجلب كافة الأسماء المسجلة لهذا الرقم عبر جميع الصفوف
+    try {
+      final dbResults = await DatabaseHelper.instance.searchByNumber(phone);
+      for (final row in dbResults) {
+        final namesStr = row['names']?.toString() ?? '';
+        addNamesFromString(namesStr);
+      }
+    } catch (e) {
+      debugPrint("خطأ أثناء جلب كافة الأسماء المرتبطة بالرقم: $e");
+    }
+
+    final List<String> namesList = distinctNames.toList();
+    if (!context.mounted) return;
 
     AppModalDialog.show(
       context: context,
@@ -245,7 +271,8 @@ class _NameSearchViewState extends State<NameSearchView> {
                   () {
                     final item = _results[index];
                     String rawNames = item['names'] ?? '';
-                    bool hasMultipleNames = rawNames.contains(',');
+                    bool hasMultipleNames =
+                        rawNames.contains(RegExp(r'[,،|]'));
                     String matchedName =
                         _extractMatchingName(rawNames, currentQuery);
 
@@ -255,10 +282,8 @@ class _NameSearchViewState extends State<NameSearchView> {
                       hasMultipleNames: hasMultipleNames,
                       onMoreNamesPressed: () =>
                           _showNamesDialog(context, item['phone'], rawNames),
-                      onTap: hasMultipleNames
-                          ? () =>
-                              _showNamesDialog(context, item['phone'], rawNames)
-                          : null,
+                      onTap: () =>
+                          _showNamesDialog(context, item['phone'], rawNames),
                     );
                   }(),
                 ],

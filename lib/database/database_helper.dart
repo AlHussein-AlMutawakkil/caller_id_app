@@ -251,7 +251,7 @@ class DatabaseHelper {
         columns: [nameCol, phoneCol],
         where: '$phoneCol = ?',
         whereArgs: [number.trim()],
-        limit: 1,
+        limit: 100,
       );
 
       return results.map((row) => {
