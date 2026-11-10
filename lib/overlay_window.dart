@@ -28,6 +28,9 @@ class _CallerOverlayWindowState extends State<CallerOverlayWindow> {
         _processData(data);
       }
     });
+
+    // طلب البيانات فوراً عند الجاهزية (Handshake)
+    FlutterOverlayWindow.shareData('request_data');
   }
 
   // دالة موحدة لمعالجة وتفكيك البيانات مع دعم الفواصل العربية والإنجليزية

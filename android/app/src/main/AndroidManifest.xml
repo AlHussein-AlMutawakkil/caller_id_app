@@ -1,18 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.caller_id_app"> <!-- تأكد من أن الباكيج نيم يطابق مشروعك -->
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.caller_id_app">
 
     <!-- 1. صلاحيات قراءة الملفات الضخمة (ضرورية لقاعدة البيانات) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
-    <!-- 2. صلاحيات النافذة العائمة والخدمات الأمامية والمنبهات (جديد) -->
+    <!-- 2. صلاحيات النافذة العائمة والخدمات الأمامية والمنبهات -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- 3. صلاحيات التقاط رقم المتصل عند الرنين -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -20,7 +23,7 @@
 
     <application
         android:requestLegacyExternalStorage="true"
-        android:label="كاشف الإرقام المحلي"
+        android:label="كاشف الأرقام المحلي"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
 
@@ -34,7 +37,22 @@
         <!-- إعدادات النافذة العائمة (Service) -->
         <service
             android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="caller_id_overlay_window" />
+        </service>
+
+        <!-- إعدادات الخدمة الخلفية لمراقبة المكالمات -->
+        <service
+            android:name="id.flutter.flutter_background_service.BackgroundService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="caller_id_background_monitoring" />
+        </service>
 
         <activity
             android:name=".MainActivity"

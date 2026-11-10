@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:phone_state/phone_state.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -56,7 +57,17 @@ Future<void> initializeBackgroundService() async {
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
+  DartPluginRegistrant.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
+
+  Map<String, dynamic>? lastCallData;
+
+  // الاستماع لطلبات البيانات من النافذة العائمة فور جاهزيتها
+  ov.FlutterOverlayWindow.overlayListener.listen((data) {
+    if (data == 'request_data' && lastCallData != null) {
+      ov.FlutterOverlayWindow.shareData(lastCallData!);
+    }
+  });
 
   PhoneState.stream.listen((event) async {
     if (event.status == PhoneStateStatus.CALL_INCOMING) {
@@ -67,14 +78,31 @@ void onStart(ServiceInstance service) async {
       String? incomingNumber = event.number;
 
       if (incomingNumber != null && incomingNumber.isNotEmpty) {
-        // 1. جلب البيانات من قاعدة البيانات (مطابقة تامة)
-        final dbResults =
-            await DatabaseHelper.instance.searchByNumber(incomingNumber);
+        // تنظيف الرقم من المسافات والأقواس
+        String cleanNumber = incomingNumber.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+        if (cleanNumber.startsWith('+967')) {
+          cleanNumber = cleanNumber.substring(4);
+        } else if (cleanNumber.startsWith('00967')) {
+          cleanNumber = cleanNumber.substring(5);
+        }
+
+        // 1. جلب البيانات من قاعدة البيانات
+        var dbResults =
+            await DatabaseHelper.instance.searchByNumber(cleanNumber);
+        if (dbResults.isEmpty && cleanNumber != incomingNumber) {
+          dbResults =
+              await DatabaseHelper.instance.searchByNumber(incomingNumber);
+        }
 
         String displayName = "رقم غير مسجل";
         if (dbResults.isNotEmpty) {
           displayName = dbResults.first['names'] ?? "رقم غير مسجل";
         }
+
+        lastCallData = {
+          'name': displayName,
+          'phone': incomingNumber,
+        };
 
         // 2. إظهار النافذة إذا لم تكن نشطة
         if (!await ov.FlutterOverlayWindow.isActive()) {
@@ -88,18 +116,17 @@ void onStart(ServiceInstance service) async {
           );
         }
 
-        // 3. تأخير بسيط (300ms) لضمان أن النافذة جاهزة لاستقبال البيانات عبر overlayListener
+        // 3. إرسال البيانات المجهزة للنافذة مع تكرار تأكيدي
         await Future.delayed(const Duration(milliseconds: 300));
+        ov.FlutterOverlayWindow.shareData(lastCallData!);
 
-        // 4. إرسال البيانات المجهزة للنافذة
-        ov.FlutterOverlayWindow.shareData({
-          'name': displayName,
-          'phone': incomingNumber,
-        });
+        await Future.delayed(const Duration(milliseconds: 600));
+        ov.FlutterOverlayWindow.shareData(lastCallData!);
       }
     }
 
     if (event.status == PhoneStateStatus.CALL_ENDED) {
+      lastCallData = null;
       if (await ov.FlutterOverlayWindow.isActive()) {
         await ov.FlutterOverlayWindow.closeOverlay();
       }
@@ -158,9 +185,13 @@ class _MyAppState extends State<MyApp> {
     await [
       Permission.phone,
       Permission.contacts,
-      Permission.systemAlertWindow,
       Permission.notification,
     ].request();
+
+    final isOverlayGranted = await ov.FlutterOverlayWindow.isPermissionGranted();
+    if (!isOverlayGranted) {
+      await ov.FlutterOverlayWindow.requestPermission();
+    }
   }
 
   @override

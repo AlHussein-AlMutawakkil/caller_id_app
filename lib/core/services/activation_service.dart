@@ -94,6 +94,7 @@ class ActivationService {
 
   // أسماء ملفات التخزين المحلي المحمية
   static const String _installSessionFile = '.app_install_id';
+  static const String _deviceIdFile = '.device_id';
   static const String _licenseFile = '.license_data.json';
 
   String? _cachedRequestCode;
@@ -106,16 +107,47 @@ class ActivationService {
     return pin.trim() == _kAdminPin;
   }
 
-  /// الحصول على معرف أندرويد من النظام
+  /// الحصول على معرف أندرويد من النظام مع حفظه محلياً لضمان توفره في الخدمة الخلفية
   Future<String> _getAndroidId() async {
     try {
       final String? id =
           await _deviceChannel.invokeMethod<String>('getAndroidId');
       if (id != null && id.trim().isNotEmpty && id != 'UNKNOWN_DEVICE') {
-        return id.trim();
+        final cleanId = id.trim();
+        await _savePersistedAndroidId(cleanId);
+        return cleanId;
       }
     } catch (_) {}
+
+    // استرجاع المعرف المحفوظ في حال كان الاستدعاء من خدمة خلفية منفصلة
+    final savedId = await _getPersistedAndroidId();
+    if (savedId != null && savedId.isNotEmpty) {
+      return savedId;
+    }
+
     return 'STANDARD_ANDROID_DEVICE';
+  }
+
+  Future<void> _savePersistedAndroidId(String id) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File(p.join(dir.path, _deviceIdFile));
+      await file.writeAsString(id);
+    } catch (_) {}
+  }
+
+  Future<String?> _getPersistedAndroidId() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File(p.join(dir.path, _deviceIdFile));
+      if (await file.exists()) {
+        final content = (await file.readAsString()).trim();
+        if (content.isNotEmpty) {
+          return content;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// الحصول على رقم جلسة التثبيت (الخيار الثاني: يتغير تلقائياً عند حذف التطبيق)
@@ -362,16 +394,29 @@ class ActivationService {
       final Map<String, dynamic> data = jsonDecode(content);
 
       final String activationCode = data['activation_code'] ?? '';
+      final String savedReqCode = data['request_code'] ?? '';
       final String lastOpenedStr = data['last_opened_at'] ?? '';
       final DateTime? lastOpened = DateTime.tryParse(lastOpenedStr);
 
       final currentReqCode = await getDeviceRequestCode();
 
-      final result = verifyCode(
+      var result = verifyCode(
         activationCode: activationCode,
         requestCode: currentReqCode,
         lastRecordedDate: lastOpened,
       );
+
+      // في حال الاستدعاء من الخلفية واختلاف المعرف الافتراضي، نتحقق مع كود الطلب المحفوظ في الترخيص
+      if (!result.isValid && savedReqCode.isNotEmpty) {
+        final fallbackResult = verifyCode(
+          activationCode: activationCode,
+          requestCode: savedReqCode,
+          lastRecordedDate: lastOpened,
+        );
+        if (fallbackResult.isValid) {
+          result = fallbackResult;
+        }
+      }
 
       if (result.isValid) {
         // تحديث آخر وقت فتح لحماية الساعة
