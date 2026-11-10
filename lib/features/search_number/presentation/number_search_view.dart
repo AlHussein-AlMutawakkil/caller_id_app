@@ -89,7 +89,8 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: count > 0
-                  ? AppColors.primary.withOpacity(AppColors.isDarkMode ? 0.2 : 0.08)
+                  ? AppColors.primary
+                      .withOpacity(AppColors.isDarkMode ? 0.2 : 0.08)
                   : AppColors.error.withOpacity(0.08),
               borderRadius: BorderRadius.circular(20),
             ),
@@ -166,12 +167,11 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.Secondary,
-                  prefixIcon:
-                      Icon(Icons.dialpad, color: AppColors.primary),
+                  prefixIcon: Icon(Icons.dialpad, color: AppColors.primary),
                   suffixIcon: _controller.text.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear,
-                              color: AppColors.textSecondary),
+                          icon:
+                              Icon(Icons.clear, color: AppColors.textSecondary),
                           onPressed: () {
                             setState(() {
                               _controller.clear();
@@ -179,7 +179,7 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
                           },
                         )
                       : null,
-                  hintText: 'أدخل رقم الهاتف المراد البحث عنه...',
+                  hintText: 'أدخل الرقم هنا',
                   hintStyle: TextStyle(color: AppColors.textSecondary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

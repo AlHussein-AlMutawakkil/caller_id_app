@@ -13,6 +13,7 @@ import 'database_view.dart';
 import 'telecom_companies_view.dart';
 import '../../database/database_helper.dart';
 import 'license_view.dart';
+import 'analytics_view.dart';
 import '../../core/services/theme_service.dart';
 
 class SettingsView extends StatefulWidget {
@@ -74,13 +75,13 @@ class _SettingsViewState extends State<SettingsView> {
         body: ListView(
           padding: const EdgeInsets.only(top: 8, bottom: 28),
           children: [
-            // 1. بطاقة الترخيص
+            // 1. المجموعة الأولى: بطاقة الترخيص والتحليل
             SettingsCard(
               children: [
                 SettingsTile(
                   leading: Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 22),
                   title: 'الترخيص',
-                  trailing: Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
+                  showDivider: true,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -88,16 +89,25 @@ class _SettingsViewState extends State<SettingsView> {
                     );
                   },
                 ),
+                SettingsTile(
+                  leading: Icon(Icons.analytics_rounded, color: AppColors.primary, size: 22),
+                  title: 'التحليل',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AnalyticsView()),
+                    );
+                  },
+                ),
               ],
             ),
 
-            // 3. بطاقة شركات الاتصالات وقاعدة البيانات
+            // 2. المجموعة الثانية: بطاقة شركات الاتصالات وقاعدة البيانات
             SettingsCard(
               children: [
                 SettingsTile(
                   leading: Icon(AppIcons.telecom, color: AppColors.textPrimary, size: 22),
                   title: 'شركات الاتصالات',
-                  trailing: Icon(AppIcons.chevronRight, size: 20, color: AppColors.textSecondary),
                   showDivider: true,
                   onTap: () {
                     Navigator.push(
@@ -242,7 +252,7 @@ class _SettingsViewState extends State<SettingsView> {
                         SystemNavigator.pop();
                       },
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         child: Text(
                           'هل أنت متأكد من رغبتك في إغلاق والخروج من التطبيق؟',
                           textAlign: TextAlign.center,

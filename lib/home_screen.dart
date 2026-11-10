@@ -43,6 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
           toolbarHeight: 60,
           backgroundColor: AppColors.appBarBackground,
           automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(AppIcons.menu, color: Colors.white),
+            tooltip: 'الإعدادات',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsView()),
+              );
+              _updateDatabaseCounter();
+            },
+          ),
           title: const Text(
             "كاشف الأرقام المحلي",
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -106,19 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(AppIcons.menu, color: Colors.white),
-              tooltip: 'الإعدادات',
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsView()),
-                );
-                _updateDatabaseCounter();
-              },
-            ),
-          ],
         ),
         extendBody: true,
         body: IndexedStack(

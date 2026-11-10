@@ -180,7 +180,9 @@ class DatabaseHelper {
             company TEXT
           )
           ''');
-    } catch(e) {}
+    } catch (e) {
+      debugPrint("خطأ في إنشاء الجدول الافتراضي: $e");
+    }
   }
 
   Future<String> getDatabasesDirectoryPath() async {

@@ -15,7 +15,8 @@ class AppColors {
   static Color get buttonBackground => isDarkMode ? const Color(0xFF2563EB) : const Color(0xFF1E232C);
 
   // لون الحقول وعناصر الإدخال الثانوية
-  static Color get Secondary => isDarkMode ? const Color(0xFF1E2636) : const Color(0xFFEAEAEA);
+  static Color get secondary => isDarkMode ? const Color(0xFF1E2636) : const Color(0xFFEAEAEA);
+  static Color get Secondary => secondary;
 
   // اللون الأزرق النيلي المخصص
   static Color get textDark => isDarkMode ? const Color(0xFF38BDF8) : const Color(0xFFEAEAEA);
