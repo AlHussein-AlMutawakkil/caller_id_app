@@ -264,7 +264,7 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
                   physics: const BouncingScrollPhysics(),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.only(bottom: 80),
                   child: Column(
                     children: [
                       _buildResultsCountHeader(state.results.length),

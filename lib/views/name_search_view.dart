@@ -488,6 +488,7 @@ class _NameSearchViewState extends State<NameSearchView>
               ],
             ),
           ),
+        const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
       ],
     );
   }

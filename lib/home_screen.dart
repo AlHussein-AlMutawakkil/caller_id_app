@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'database/database_helper.dart';
 import 'core/theme/app_colors.dart';
 import 'features/search_number/presentation/number_search_view.dart';
@@ -119,6 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+        extendBody: true,
         body: IndexedStack(
           index: _currentIndex,
           children: const [
@@ -126,24 +128,119 @@ class _HomeScreenState extends State<HomeScreen> {
             NumberSearchView(),
           ],
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          backgroundColor: AppColors.appBarBackground,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white70,
-          onTap: (index) {
-            FocusScope.of(context).unfocus();
-            setState(() => _currentIndex = index);
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_search),
-              label: "بحث بالإسم",
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildFloatingBottomNavBar(),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dialpad),
-              label: "بحث بالرقم",
+          ),
+        ),
+      ),
+    );
+  }
+
+  // شريط التبويب العائم المطابق للتصميم الكبسولي في الصورة المرفقة
+  Widget _buildFloatingBottomNavBar() {
+    final bool isDark = AppColors.isDarkMode;
+    final Color outerBg = isDark ? AppColors.cardBackground : Colors.white;
+    final Color outerBorder =
+        isDark ? AppColors.cardBorder : Colors.black.withOpacity(0.06);
+    final Color activePillBg =
+        isDark ? const Color(0xFF2563EB) : const Color(0xFF0F2643);
+    final Color inactiveIconColor =
+        isDark ? Colors.white70 : const Color(0xFF0F2643);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: outerBg,
+        borderRadius: BorderRadius.circular(35),
+        border: Border.all(color: outerBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 5),
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(5),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildNavItem(
+            index: 0,
+            label: "بحث بالإسم",
+            icon: Icons.person_search_rounded,
+            isSelected: _currentIndex == 0,
+            activePillBg: activePillBg,
+            inactiveIconColor: inactiveIconColor,
+          ),
+          const SizedBox(width: 4),
+          _buildNavItem(
+            index: 1,
+            label: "بحث بالرقم",
+            icon: Icons.dialpad_rounded,
+            isSelected: _currentIndex == 1,
+            activePillBg: activePillBg,
+            inactiveIconColor: inactiveIconColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required Color activePillBg,
+    required Color inactiveIconColor,
+  }) {
+    return InkWell(
+      onTap: () {
+        if (_currentIndex != index) {
+          HapticFeedback.lightImpact();
+          FocusScope.of(context).unfocus();
+          setState(() => _currentIndex = index);
+        }
+      },
+      borderRadius: BorderRadius.circular(28),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOutCubic,
+        padding: isSelected
+            ? const EdgeInsets.symmetric(horizontal: 18, vertical: 10)
+            : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? activePillBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? Colors.white : inactiveIconColor,
             ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ],
         ),
       ),
