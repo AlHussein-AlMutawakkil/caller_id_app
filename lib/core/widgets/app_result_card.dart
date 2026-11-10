@@ -58,6 +58,7 @@ class AppResultTile extends StatelessWidget {
   final String name;
   final String phone;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final bool hasMultipleNames;
   final int? namesCount;
   final VoidCallback? onMoreNamesPressed;
@@ -68,6 +69,7 @@ class AppResultTile extends StatelessWidget {
     required this.name,
     required this.phone,
     this.onTap,
+    this.onLongPress,
     this.hasMultipleNames = false,
     this.namesCount,
     this.onMoreNamesPressed,
@@ -97,7 +99,11 @@ class AppResultTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap ?? (hasMultipleNames ? onMoreNamesPressed : null),
+        onTap: hasMultipleNames ? (onTap ?? onMoreNamesPressed) : null,
+        onLongPress: onLongPress ?? () {
+          HapticFeedback.lightImpact();
+          _copyToClipboard(context);
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -108,7 +114,8 @@ class AppResultTile extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 2),
                 child: CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.primary.withOpacity(0.07),
+                  backgroundColor: AppColors.primary
+                      .withOpacity(AppColors.isDarkMode ? 0.2 : 0.08),
                   child: Icon(
                     Icons.person_rounded,
                     color: AppColors.primary,
@@ -137,19 +144,23 @@ class AppResultTile extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.phone_outlined,
                           size: 14,
-                          color: Color(0xFF1E88E5),
+                          color: AppColors.isDarkMode
+                              ? const Color(0xFF60A5FA)
+                              : const Color(0xFF1E88E5),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           phone,
                           textDirection: TextDirection.ltr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E88E5),
+                            color: AppColors.isDarkMode
+                                ? const Color(0xFF60A5FA)
+                                : const Color(0xFF1E88E5),
                           ),
                         ),
                       ],

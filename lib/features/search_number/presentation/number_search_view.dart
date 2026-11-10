@@ -28,18 +28,123 @@ class _NumberSearchBody extends StatefulWidget {
 
 class _NumberSearchBodyState extends State<_NumberSearchBody> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   void _performSearch() {
     final query = _controller.text.trim();
     if (query.isEmpty) return;
+
+    // إغلاق لوحة المفاتيح وسحب التركيز فوراً
+    _focusNode.unfocus();
     FocusScope.of(context).unfocus();
+
     context.read<SearchNumberCubit>().search(query);
+  }
+
+  Widget _buildResultsCountHeader(int count) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(AppColors.isDarkMode ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.format_list_bulleted_rounded,
+                size: 20,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "نتائج البحث",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: count > 0
+                  ? AppColors.primary.withOpacity(AppColors.isDarkMode ? 0.2 : 0.08)
+                  : AppColors.error.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              "$count ${count == 1 ? 'اسم مسجل' : (count == 2 ? 'اسمان مسجلان' : 'أسماء مسجلة')}",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: count > 0 ? AppColors.primary : AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyResultsIndicator() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.phone_disabled_rounded,
+            size: 46,
+            color: AppColors.textSecondary.withOpacity(0.6),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "لم يتم العثور على أي نتائج (0)",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "هذا الرقم غير مسجل في قاعدة البيانات الحالية",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -52,9 +157,11 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
             children: [
               TextField(
                 controller: _controller,
+                focusNode: _focusNode,
+                autofocus: false,
                 keyboardType: TextInputType.phone,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 18, color: AppColors.textPrimary),
                 onSubmitted: (_) => _performSearch(),
                 decoration: InputDecoration(
                   filled: true,
@@ -73,6 +180,7 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
                         )
                       : null,
                   hintText: 'أدخل رقم الهاتف المراد البحث عنه...',
+                  hintStyle: TextStyle(color: AppColors.textSecondary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -83,13 +191,12 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
                 },
               ),
               const SizedBox(height: 16),
-              // زر البحث بالرقم المطلوب
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.buttonBackground,
                     minimumSize: const Size.fromHeight(50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -146,30 +253,32 @@ class _NumberSearchBodyState extends State<_NumberSearchBody> {
               if (state is SearchNumberSuccess) {
                 if (state.results.isEmpty) {
                   return Center(
-                    child: Text(
-                      'لا توجد نتائج مطابقة',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: _buildEmptyResultsIndicator(),
                     ),
                   );
                 }
 
-                // عرض نتائج البحث في بطاقة موحدة بخطوط فاصلة دقيقة (مطابقة للصورة 2)
                 return SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: AppResultListContainer(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
                     children: [
-                      for (final item in state.results)
-                        AppResultTile(
-                          name: item.name,
-                          phone: item.phone,
-                        ),
+                      _buildResultsCountHeader(state.results.length),
+                      AppResultListContainer(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        children: [
+                          for (final item in state.results)
+                            AppResultTile(
+                              name: item.name,
+                              phone: item.phone,
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 );

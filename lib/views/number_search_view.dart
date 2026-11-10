@@ -29,22 +29,22 @@ class _NumberSearchViewState extends State<NumberSearchView> {
     List<Map<String, dynamic>> dbResults =
         await DatabaseHelper.instance.searchByNumber(query);
 
-    List<Map<String, dynamic>> separatedResults = [];
+    final Set<String> distinctNames = {};
     for (var row in dbResults) {
       String namesStr = row['names'] ?? '';
       List<String> splitNames = namesStr
-          .split(RegExp(r'[,،|]'))
+          .split(RegExp(r'[,،|\n]'))
           .map((e) => e.trim())
           .where((e) => e.isNotEmpty)
           .toList();
 
-      for (var name in splitNames) {
-        separatedResults.add({
-          'names': name,
-          'phone': row['phone'] ?? query,
-        });
-      }
+      distinctNames.addAll(splitNames);
     }
+
+    List<Map<String, dynamic>> separatedResults = distinctNames.map((name) => {
+      'names': name,
+      'phone': query,
+    }).toList();
 
     setState(() {
       _results = separatedResults;
@@ -113,8 +113,8 @@ class _NumberSearchViewState extends State<NumberSearchView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 12),
-            Text("جاري فحص وبحث السجلات بدقة...",
+            const SizedBox(height: 12),
+            const Text("جاري فحص وبحث السجلات بدقة...",
                 style: TextStyle(color: Colors.blueGrey, fontSize: 14)),
           ],
         ),

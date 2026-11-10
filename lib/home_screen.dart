@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         appBar: AppBar(
           toolbarHeight: 60,
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.appBarBackground,
           automaticallyImplyLeading: false,
           title: const Text(
             "كاشف الأرقام المحلي",
@@ -128,10 +128,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.appBarBackground,
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.white70,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: (index) {
+            FocusScope.of(context).unfocus();
+            setState(() => _currentIndex = index);
+          },
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.person_search),

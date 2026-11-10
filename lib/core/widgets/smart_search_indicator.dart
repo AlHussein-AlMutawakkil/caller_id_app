@@ -17,7 +17,8 @@ class SmartSearchIndicator extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
+              color: AppColors.primary
+                  .withOpacity(AppColors.isDarkMode ? 0.15 : 0.05),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(

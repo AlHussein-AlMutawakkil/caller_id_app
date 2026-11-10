@@ -32,6 +32,13 @@ class ThemeService extends ChangeNotifier {
       }
     } catch (_) {}
 
+    PlatformDispatcher.instance.onPlatformBrightnessChanged = () {
+      if (_themeMode == 0) {
+        _syncWithAppColors();
+        notifyListeners();
+      }
+    };
+
     _syncWithAppColors();
     notifyListeners();
   }

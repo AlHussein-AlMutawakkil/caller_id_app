@@ -13,6 +13,7 @@ import 'database_view.dart';
 import 'telecom_companies_view.dart';
 import '../../database/database_helper.dart';
 import 'license_view.dart';
+import '../../core/services/theme_service.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -156,18 +157,21 @@ class _SettingsViewState extends State<SettingsView> {
                   leading: Icon(AppIcons.appearance, color: AppColors.textPrimary, size: 22),
                   title: 'المظهر',
                   trailing: Text(
-                    'فاتح',
+                    ThemeService.instance.themeMode == 2
+                        ? 'مظلم'
+                        : (ThemeService.instance.themeMode == 1 ? 'فاتح' : 'حسب النظام'),
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
                   ),
                   showDivider: true,
-                  onTap: () {
-                    Navigator.push(
+                  onTap: () async {
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const AppearanceView()),
                     );
+                    if (mounted) setState(() {});
                   },
                 ),
                 SettingsTile(

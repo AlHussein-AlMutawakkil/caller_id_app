@@ -5,18 +5,26 @@ class AppColors {
 
   static bool isDarkMode = false;
 
-  // اللون الداكن الأساسي للـ AppBar والعناصر البارزة
-  static Color get primary => isDarkMode ? const Color(0xFF1E2633) : const Color(0xFF1E232C);
-  static Color get Secondary => isDarkMode ? const Color(0xFF222938) : const Color(0xFFeaeaea);
+  // اللون الأساسي للأيقونات والمؤشرات التفاعلية
+  static Color get primary => isDarkMode ? const Color(0xFF60A5FA) : const Color(0xFF1E232C);
 
-  // اللون الأزرق النيلي الغامق المخصص لعرض الأسماء المطابقة
-  static Color get textDark => isDarkMode ? const Color(0xFF2B3447) : const Color(0xFFeaeaea);
+  // لون شريط التطبيق العلوي والسفلي
+  static Color get appBarBackground => isDarkMode ? const Color(0xFF131822) : const Color(0xFF1E232C);
+
+  // لون خلفية الأزرار الرئيسية
+  static Color get buttonBackground => isDarkMode ? const Color(0xFF2563EB) : const Color(0xFF1E232C);
+
+  // لون الحقول وعناصر الإدخال الثانوية
+  static Color get Secondary => isDarkMode ? const Color(0xFF1E2636) : const Color(0xFFEAEAEA);
+
+  // اللون الأزرق النيلي المخصص
+  static Color get textDark => isDarkMode ? const Color(0xFF38BDF8) : const Color(0xFFEAEAEA);
 
   // ألوان الخلفيات والكروت
-  static Color get scaffoldBackground => isDarkMode ? const Color(0xFF0F1218) : const Color(0xFFF7F8FA);
-  static Color get cardBackground => isDarkMode ? const Color(0xFF181D26) : Colors.white;
-  static Color get cardBorder => isDarkMode ? const Color(0xFF252D3B) : const Color(0xFFF0F1F4);
-  static Color get divider => isDarkMode ? const Color(0xFF232A37) : const Color(0xFFF0F1F5);
+  static Color get scaffoldBackground => isDarkMode ? const Color(0xFF0F141C) : const Color(0xFFF7F8FA);
+  static Color get cardBackground => isDarkMode ? const Color(0xFF181F2C) : Colors.white;
+  static Color get cardBorder => isDarkMode ? const Color(0xFF263346) : const Color(0xFFF0F1F4);
+  static Color get divider => isDarkMode ? const Color(0xFF222B3A) : const Color(0xFFF0F1F5);
 
   // ألوان النصوص
   static Color get textPrimary => isDarkMode ? const Color(0xFFF1F5F9) : const Color(0xFF1A1D26);

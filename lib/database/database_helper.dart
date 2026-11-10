@@ -225,7 +225,49 @@ class DatabaseHelper {
     }
   }
 
-  // ⚡ استعلام الرقم الصاروخي الفوري المباشر مع دعم التوافق التلقائي للأعمدة
+  // استخراج كافة الصيغ المحتملة للرقم اليمني (مع وبدون الصفر، وبالرمز الدولي 967 و 00967)
+  static List<String> getPhoneVariants(String rawNumber) {
+    String clean = rawNumber.trim().replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+    if (clean.isEmpty) return [];
+
+    // استخلاص الرقم المحلي بدون المفتاح الدولي
+    String local = clean;
+    if (local.startsWith('00967')) {
+      local = local.substring(5);
+    } else if (local.startsWith('967') && local.length > 7) {
+      local = local.substring(3);
+    }
+
+    final Set<String> variants = {
+      rawNumber.trim(),
+      clean,
+      local,
+    };
+
+    if (local.startsWith('0')) {
+      final withoutZero = local.substring(1);
+      variants.add(withoutZero);
+      variants.add('967$local');
+      variants.add('967$withoutZero');
+      variants.add('00967$local');
+      variants.add('00967$withoutZero');
+      variants.add('+967$local');
+      variants.add('+967$withoutZero');
+    } else {
+      final withZero = '0$local';
+      variants.add(withZero);
+      variants.add('967$local');
+      variants.add('967$withZero');
+      variants.add('00967$local');
+      variants.add('00967$withZero');
+      variants.add('+967$local');
+      variants.add('+967$withZero');
+    }
+
+    return variants.where((v) => v.isNotEmpty).toSet().toList();
+  }
+
+  // ⚡ استعلام الرقم الصاروخي الفوري المباشر مع دعم التوافق التلقائي للأعمدة وكافة صيغ الأرقام
   Future<List<Map<String, dynamic>>> searchByNumber(String number) async {
     try {
       final db = await database;
@@ -246,11 +288,16 @@ class DatabaseHelper {
           ? 'names'
           : (columns.any((c) => c['name'] == 'name') ? 'name' : (columns.length > 1 ? columns[1]['name'] as String : 'names'));
 
+      final variants = getPhoneVariants(number);
+      if (variants.isEmpty) return [];
+
+      final placeholders = List.filled(variants.length, '?').join(',');
+
       final results = await db.query(
         tableName,
         columns: [nameCol, phoneCol],
-        where: '$phoneCol = ?',
-        whereArgs: [number.trim()],
+        where: '$phoneCol IN ($placeholders)',
+        whereArgs: variants,
         limit: 100,
       );
 
@@ -307,6 +354,118 @@ class DatabaseHelper {
     } catch (e) {
       debugPrint("خطأ أثناء البحث بالاسم: $e");
       return [];
+    }
+  }
+
+  /// فحص فائق السرعة لنتائج البحث وتحديد ما إذا كان لكل رقم أسماء مرتبطة متعددة في قاعدة البيانات بدقة تامة
+  Future<List<Map<String, dynamic>>> enrichResultsWithMultipleNames(
+    List<Map<String, dynamic>> rawResults,
+  ) async {
+    if (rawResults.isEmpty) return [];
+
+    try {
+      final db = await database;
+      var tables = await db.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name != 'android_metadata' AND name NOT LIKE 'sqlite_%'");
+      if (tables.isEmpty) return rawResults;
+
+      String tableName = 'nambers_thabeet';
+      if (!tables.any((t) => t['name'] == 'nambers_thabeet')) {
+        tableName = tables.first['name'] as String;
+      }
+
+      var columns = await db.rawQuery("PRAGMA table_info($tableName)");
+      String phoneCol = columns.any((c) => c['name'] == 'phone')
+          ? 'phone'
+          : (columns.any((c) => c['name'] == 'number')
+              ? 'number'
+              : (columns.isNotEmpty
+                  ? columns.first['name'] as String
+                  : 'phone'));
+      String nameCol = columns.any((c) => c['name'] == 'names')
+          ? 'names'
+          : (columns.any((c) => c['name'] == 'name')
+              ? 'name'
+              : (columns.length > 1
+                  ? columns[1]['name'] as String
+                  : 'names'));
+
+      // تجميع كل الصيغ المحتملة لكل الأرقام في النتائج
+      final Map<String, Set<String>> phoneToVariants = {};
+      final Set<String> allVariantsSet = {};
+
+      for (var row in rawResults) {
+        String phone = (row[phoneCol] ?? row['phone'] ?? '').toString().trim();
+        if (phone.isNotEmpty && !phoneToVariants.containsKey(phone)) {
+          final variants = getPhoneVariants(phone);
+          phoneToVariants[phone] = variants.toSet();
+          allVariantsSet.addAll(variants);
+        }
+      }
+
+      if (allVariantsSet.isEmpty) return rawResults;
+
+      final allVariantsList = allVariantsSet.toList();
+      final placeholders = List.filled(allVariantsList.length, '?').join(',');
+      final queryResults = await db.query(
+        tableName,
+        columns: [phoneCol, nameCol],
+        where: '$phoneCol IN ($placeholders)',
+        whereArgs: allVariantsList,
+      );
+
+      final Map<String, List<String>> dbPhoneToNames = {};
+      for (var r in queryResults) {
+        String p = r[phoneCol]?.toString().trim() ?? '';
+        String n = r[nameCol]?.toString().trim() ?? '';
+        if (p.isNotEmpty && n.isNotEmpty) {
+          dbPhoneToNames.putIfAbsent(p, () => []).add(n);
+        }
+      }
+
+      return rawResults.map((row) {
+        String phone = (row[phoneCol] ?? row['phone'] ?? '').toString().trim();
+        String initialNames =
+            (row[nameCol] ?? row['names'] ?? '').toString().trim();
+
+        final Set<String> distinctNames = {};
+
+        if (initialNames.isNotEmpty) {
+          distinctNames.addAll(
+            initialNames
+                .split(RegExp(r'[,،|\n]'))
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty),
+          );
+        }
+
+        final variants = phoneToVariants[phone] ?? {};
+        for (var v in variants) {
+          final matchedNames = dbPhoneToNames[v];
+          if (matchedNames != null) {
+            for (var nameStr in matchedNames) {
+              distinctNames.addAll(
+                nameStr
+                    .split(RegExp(r'[,،|\n]'))
+                    .map((e) => e.trim())
+                    .where((e) => e.isNotEmpty),
+              );
+            }
+          }
+        }
+
+        final bool hasMultiple = distinctNames.length > 1;
+
+        return {
+          ...row,
+          'hasMultipleNames': hasMultiple,
+          'namesCount': distinctNames.length,
+          'allAssociatedNames': distinctNames.toList(),
+        };
+      }).toList();
+    } catch (e) {
+      debugPrint("خطأ أثناء إثراء نتائج البحث: $e");
+      return rawResults;
     }
   }
 }

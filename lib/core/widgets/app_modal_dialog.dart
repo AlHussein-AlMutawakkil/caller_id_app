@@ -62,11 +62,12 @@ class AppModalDialog extends StatelessWidget {
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withOpacity(AppColors.isDarkMode ? 0.3 : 0.12),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),

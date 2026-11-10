@@ -120,6 +120,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
         builder: (ctx) => Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
+            backgroundColor: AppColors.cardBackground,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Row(
               children: [
@@ -175,6 +176,7 @@ class _ActivationGateViewState extends State<ActivationGateView> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
+          backgroundColor: AppColors.cardBackground,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text(
             'رمز المرور',

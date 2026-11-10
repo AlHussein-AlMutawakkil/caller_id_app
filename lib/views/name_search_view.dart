@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../database/database_helper.dart';
 import '../core/theme/app_colors.dart';
 import '../core/constants/app_constants.dart';
@@ -14,20 +15,39 @@ class NameSearchView extends StatefulWidget {
   State<NameSearchView> createState() => _NameSearchViewState();
 }
 
-class _NameSearchViewState extends State<NameSearchView> {
+class _NameSearchViewState extends State<NameSearchView>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
   List<Map<String, dynamic>> _results = [];
   bool _isLoading = false;
+  bool _hasSearched = false;
   String _selectedCompany = "الكل";
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _search() async {
     String query = _searchController.text.trim();
     if (query.isEmpty) return;
 
-    // السحر هنا: إغلاق لوحة المفاتيح وسحب مؤشر الكتابة فوراً عند الضغط على بحث
+    // إغلاق لوحة المفاتيح وسحب التركيز فوراً
+    _searchFocusNode.unfocus();
     FocusScope.of(context).unfocus();
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasSearched = true;
+    });
 
     String? prefix = _selectedCompany == "الكل"
         ? null
@@ -35,10 +55,15 @@ class _NameSearchViewState extends State<NameSearchView> {
     List<Map<String, dynamic>> dbResults = await DatabaseHelper.instance
         .searchByName(query, companyPrefix: prefix);
 
-    setState(() {
-      _results = dbResults;
-      _isLoading = false;
-    });
+    final enrichedResults = await DatabaseHelper.instance
+        .enrichResultsWithMultipleNames(dbResults);
+
+    if (mounted) {
+      setState(() {
+        _results = enrichedResults;
+        _isLoading = false;
+      });
+    }
   }
 
   String _extractMatchingName(String allNames, String searchQuery) {
@@ -56,7 +81,12 @@ class _NameSearchViewState extends State<NameSearchView> {
   }
 
   Future<void> _showNamesDialog(
-      BuildContext context, String phone, String allNames) async {
+      BuildContext context, String phone, String allNames,
+      {List<String>? preloadedNames}) async {
+    // سحب التركيز تماماً قبل فتح الحوار
+    _searchFocusNode.unfocus();
+    FocusScope.of(context).unfocus();
+
     final Set<String> distinctNames = {};
 
     void addNamesFromString(String str) {
@@ -67,29 +97,33 @@ class _NameSearchViewState extends State<NameSearchView> {
       distinctNames.addAll(parts);
     }
 
-    addNamesFromString(allNames);
+    if (preloadedNames != null && preloadedNames.isNotEmpty) {
+      distinctNames.addAll(preloadedNames);
+    } else {
+      addNamesFromString(allNames);
 
-    // استعلام فوري لقاعدة البيانات برقم الهاتف لجلب كافة الأسماء المسجلة لهذا الرقم عبر جميع الصفوف
-    try {
-      final dbResults = await DatabaseHelper.instance.searchByNumber(phone);
-      for (final row in dbResults) {
-        final namesStr = row['names']?.toString() ?? '';
-        addNamesFromString(namesStr);
+      // استعلام فوري لقاعدة البيانات برقم الهاتف لجلب كافة الأسماء المسجلة لهذا الرقم عبر جميع الصفوف
+      try {
+        final dbResults = await DatabaseHelper.instance.searchByNumber(phone);
+        for (final row in dbResults) {
+          final namesStr = row['names']?.toString() ?? '';
+          addNamesFromString(namesStr);
+        }
+      } catch (e) {
+        debugPrint("خطأ أثناء جلب كافة الأسماء المرتبطة بالرقم: $e");
       }
-    } catch (e) {
-      debugPrint("خطأ أثناء جلب كافة الأسماء المرتبطة بالرقم: $e");
     }
 
     final List<String> namesList = distinctNames.toList();
     if (!context.mounted) return;
 
-    AppModalDialog.show(
+    await AppModalDialog.show(
       context: context,
       title: "الأسماء المرتبطة بالرقم",
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // شارة رقم الهاتف
+          // شارة رقم الهاتف مع زر النسخ بجانب الرقم العلوي
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
@@ -102,14 +136,45 @@ class _NameSearchViewState extends State<NameSearchView> {
               children: [
                 Icon(Icons.phone_android_rounded,
                     size: 16, color: AppColors.primary),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
                   phone,
                   textDirection: TextDirection.ltr,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: phone));
+                    HapticFeedback.lightImpact();
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'تم نسخ الرقم: $phone',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        backgroundColor: AppColors.primary,
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Icon(
+                      Icons.copy_rounded,
+                      size: 17,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ],
@@ -178,20 +243,121 @@ class _NameSearchViewState extends State<NameSearchView> {
         ],
       ),
     );
+
+    // بعد إغلاق الحوار (بالـ X أو النقر بالخارج): نسحب التركيز فوراً للحفاظ على موضع التمرير
+    _searchFocusNode.unfocus();
+    if (context.mounted) {
+      FocusScope.of(context).unfocus();
+    }
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  Widget _buildResultsCountHeader(int count) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(AppColors.isDarkMode ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.format_list_bulleted_rounded,
+                size: 20,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "نتائج البحث",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: count > 0
+                  ? AppColors.primary.withOpacity(AppColors.isDarkMode ? 0.2 : 0.08)
+                  : AppColors.error.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              "$count ${count == 1 ? 'نتيجة' : (count == 2 ? 'نتيجتان' : 'نتائج')}",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: count > 0 ? AppColors.primary : AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyResultsIndicator() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: 46,
+            color: AppColors.textSecondary.withOpacity(0.6),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "لم يتم العثور على أي نتائج (0)",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "تأكد من صحة الاسم المدخل أو اختر 'الكل' في شركة الاتصالات",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     String currentQuery = _searchController.text.trim();
 
     return CustomScrollView(
-      // ميزة ذكية: إخفاء لوحة المفاتيح تلقائياً بمجرد لمس الشاشة والتمرير لأسفل
+      controller: _scrollController,
+      key: const PageStorageKey<String>('name_search_scroll_view'),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
         SliverToBoxAdapter(
@@ -205,13 +371,19 @@ class _NameSearchViewState extends State<NameSearchView> {
                   prefixIcon: AppIcons.telecom,
                   items: AppConstants.companies,
                   itemLabel: (s) => s,
-                  onChanged: (v) => setState(() => _selectedCompany = v),
+                  onChanged: (v) {
+                    _searchFocusNode.unfocus();
+                    FocusScope.of(context).unfocus();
+                    setState(() => _selectedCompany = v);
+                  },
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  autofocus: false,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18),
+                  style: TextStyle(fontSize: 18, color: AppColors.textPrimary),
                   keyboardType: TextInputType.text,
                   decoration: InputDecoration(
                     filled: true,
@@ -222,6 +394,7 @@ class _NameSearchViewState extends State<NameSearchView> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none),
                     hintText: "أدخل الاسم هنا",
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -230,7 +403,7 @@ class _NameSearchViewState extends State<NameSearchView> {
                   height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: AppColors.buttonBackground,
                       minimumSize: const Size.fromHeight(50),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -254,13 +427,21 @@ class _NameSearchViewState extends State<NameSearchView> {
             ),
           ),
         ),
+        if (_hasSearched && !_isLoading)
+          SliverToBoxAdapter(
+            child: _buildResultsCountHeader(_results.length),
+          ),
         if (_isLoading)
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Center(
                   child: CircularProgressIndicator(color: AppColors.primary)),
             ),
+          ),
+        if (_hasSearched && !_isLoading && _results.isEmpty)
+          SliverToBoxAdapter(
+            child: _buildEmptyResultsIndicator(),
           ),
         if (_results.isNotEmpty)
           SliverToBoxAdapter(
@@ -271,8 +452,12 @@ class _NameSearchViewState extends State<NameSearchView> {
                   () {
                     final item = _results[index];
                     String rawNames = item['names'] ?? '';
-                    bool hasMultipleNames =
-                        rawNames.contains(RegExp(r'[,،|]'));
+                    bool hasMultipleNames = item['hasMultipleNames'] ?? false;
+                    List<String> associatedNames =
+                        (item['allAssociatedNames'] as List<dynamic>?)
+                                ?.map((e) => e.toString())
+                                .toList() ??
+                            [];
                     String matchedName =
                         _extractMatchingName(rawNames, currentQuery);
 
@@ -280,10 +465,23 @@ class _NameSearchViewState extends State<NameSearchView> {
                       name: matchedName,
                       phone: item['phone'] ?? '',
                       hasMultipleNames: hasMultipleNames,
-                      onMoreNamesPressed: () =>
-                          _showNamesDialog(context, item['phone'], rawNames),
-                      onTap: () =>
-                          _showNamesDialog(context, item['phone'], rawNames),
+                      showCopyButton: false, // إخفاء أيقونة النسخ نهائياً من نتائج البحث بالاسم
+                      onTap: hasMultipleNames
+                          ? () => _showNamesDialog(
+                                context,
+                                item['phone'],
+                                rawNames,
+                                preloadedNames: associatedNames,
+                              )
+                          : null,
+                      onMoreNamesPressed: hasMultipleNames
+                          ? () => _showNamesDialog(
+                                context,
+                                item['phone'],
+                                rawNames,
+                                preloadedNames: associatedNames,
+                              )
+                          : null,
                     );
                   }(),
                 ],

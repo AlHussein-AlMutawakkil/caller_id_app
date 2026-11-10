@@ -8,28 +8,43 @@ class NumberSearchRepository {
       : _dbHelper = dbHelper ?? DatabaseHelper.instance;
 
   Future<List<ContactModel>> searchByNumber(String phoneQuery) async {
-    final query = phoneQuery.trim();
+    final query = phoneQuery.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
     if (query.isEmpty) return [];
 
-    final rawResults = await _dbHelper.searchByNumber(query);
-    List<ContactModel> list = [];
+    String cleanNumber = query;
+    if (cleanNumber.startsWith('+967')) {
+      cleanNumber = cleanNumber.substring(4);
+    } else if (cleanNumber.startsWith('00967')) {
+      cleanNumber = cleanNumber.substring(5);
+    } else if (cleanNumber.startsWith('967') && cleanNumber.length > 7) {
+      cleanNumber = cleanNumber.substring(3);
+    }
+
+    // استعلام قاعدة البيانات لجميع صيغ الرقم (مع وبدون الصفر، وكود الدولة) دفعة واحدة
+    final rawResults = await _dbHelper.searchByNumber(cleanNumber);
+
+    final Set<String> distinctNames = {};
+
+    // تنسيق رقم العرض ليكون قياسياً وأنيقاً للمستخدم (مثال: 01209302 أو 0771234567)
+    String displayPhone = cleanNumber;
+    if (!displayPhone.startsWith('0') &&
+        (displayPhone.length == 7 || displayPhone.length == 8 || displayPhone.length == 9)) {
+      displayPhone = '0$displayPhone';
+    }
+
     for (var map in rawResults) {
       String namesStr = (map['names'] ?? map['name'] ?? 'بدون اسم').toString();
-      String phone = (map['phone'] ?? query).toString();
       List<String> splitNames = namesStr
-          .split(RegExp(r'[,،|]'))
+          .split(RegExp(r'[,،|\n]'))
           .map((e) => e.trim())
           .where((e) => e.isNotEmpty)
           .toList();
 
-      if (splitNames.isEmpty) {
-        list.add(ContactModel(name: namesStr, phone: phone));
-      } else {
-        for (var name in splitNames) {
-          list.add(ContactModel(name: name, phone: phone));
-        }
-      }
+      distinctNames.addAll(splitNames);
     }
-    return list;
+
+    return distinctNames
+        .map((name) => ContactModel(name: name, phone: displayPhone))
+        .toList();
   }
 }
